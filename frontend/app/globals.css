@@ -99,6 +99,68 @@ body {
   color: #8492ad;
 }
 
+/* ── 연결 끊김 토스트 ───────────────────────────────────── */
+.toast {
+  position: absolute;
+  left: 50%;
+  bottom: 28px;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 16px;
+  background: #1d1216;
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  border-radius: 4px;
+  box-shadow: 0 10px 36px rgba(0, 0, 0, 0.6);
+  animation: toast-in 200ms ease-out;
+}
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 8px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .toast {
+    animation: none;
+  }
+}
+.toast-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.toast-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #fecaca;
+}
+.toast-sub {
+  font-size: 12px;
+  color: #8492ad;
+  font-variant-numeric: tabular-nums;
+}
+.toast-btn {
+  flex: none;
+  padding: 6px 12px;
+  border-radius: 3px;
+  border: 1px solid #26314a;
+  background: #1b2436;
+  color: #dfe6f2;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.toast-btn:hover {
+  border-color: #475569;
+}
+
 /* ── 패널 (씬 위 오버레이) ──────────────────────────────── */
 .panel {
   position: absolute;

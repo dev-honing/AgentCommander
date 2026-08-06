@@ -19,7 +19,7 @@ import { useSelectedAgent } from '@/lib/useSelectedAgent'
 const SUMMARY_ORDER: AgentState[] = ['running', 'retrying', 'waiting', 'error', 'done', 'idle']
 
 export default function Home() {
-  const { agents, speech, connected, clickAgent } = useAgents()
+  const { agents, speech, connected, connection, clickAgent, reconnectNow } = useAgents()
   const { selectedId, select } = useSelectedAgent()
   const list = useMemo(() => Object.values(agents), [agents])
 
@@ -78,6 +78,24 @@ export default function Home() {
           agent={selected}
           onClose={handleDeselect}
         />
+      )}
+
+      {/* 연결이 끊긴 동안에도 화면을 비우지 않는다. 마지막으로 받은 상태를
+          그대로 두고 "이건 과거 값"이라고 알리는 편이 안전하다. */}
+      {!connected && connection.attempt > 0 && (
+        <div className="toast" role="status">
+          <div className="toast-body">
+            <div className="toast-title">서버와 연결이 끊겼습니다</div>
+            <div className="toast-sub">
+              화면의 상태는 마지막으로 받은 값입니다
+              {connection.retryInSeconds !== null &&
+                ` · ${connection.retryInSeconds}초 후 재시도 (${connection.attempt}번째)`}
+            </div>
+          </div>
+          <button type="button" className="toast-btn" onClick={reconnectNow}>
+            지금 시도
+          </button>
+        </div>
       )}
     </main>
   )
