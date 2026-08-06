@@ -35,10 +35,10 @@ async def lifespan(app: FastAPI):
     await db.init_pool()
     await orchestrator.load_agents()
 
-    tasks = [
-        asyncio.create_task(orchestrator.mock_state_loop()),
-        asyncio.create_task(orchestrator.purge_loop()),
-    ]
+    tasks: list[asyncio.Task] = []
+    if settings.background_tasks_enabled:
+        tasks.append(asyncio.create_task(orchestrator.mock_state_loop()))
+        tasks.append(asyncio.create_task(orchestrator.purge_loop()))
 
     yield
 

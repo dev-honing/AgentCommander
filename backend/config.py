@@ -36,6 +36,12 @@ class Settings(BaseSettings):
     max_model_size: int = 20 * 1024 * 1024  # 20MB
     allowed_model_ext: tuple[str, ...] = (".glb", ".gltf")
 
+    # 백그라운드 루프(목업 상태 전이, 로그 정리) 실행 여부.
+    #
+    # 테스트에서는 꺼야 한다 — 목업 루프가 2초마다 DB를 바꾸면 방금 만든
+    # 에이전트의 상태가 검증 직전에 뒤바뀌어 테스트가 불안정해진다.
+    background_tasks_enabled: bool = True
+
     # 목업 에이전트 수 (Phase 0~5).
     # 명세 10.1절은 "Phase 3 진입 전에 큐브 스텁 상태로 20개 동시 렌더링
     # 성능을 먼저 측정할 것"을 권고한다. 이 값을 20으로 올리면 바로 잰다.

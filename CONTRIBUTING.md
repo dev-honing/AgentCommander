@@ -115,9 +115,23 @@ pytest backend/tests/
 
 테스트 우선순위는 다음 세 가지입니다. 로직을 건드렸다면 해당 영역의 테스트를 함께 추가해 주세요.
 
-1. **상태 전이 로직** — `AgentState` 변화가 명세대로 일어나는가
-2. **REST API의 role 존재 검증** — 없는 역할로 에이전트를 만들면 404인가
-3. **재시도 소진 후 error 전이** — `max_attempts` 소진 시 `retrying` → `error`로 가는가
+1. **상태 전이 로직** — `AgentState` 변화가 명세대로 일어나는가 (`test_orchestrator.py`)
+2. **REST API의 role 존재 검증** — 없는 역할로 에이전트를 만들면 404인가 (`test_api_agents.py`)
+3. **재시도 소진 후 error 전이** — `max_attempts` 소진 시 `retrying` → `error`로 가는가 (`test_orchestrator.py`)
+
+### DB가 필요한 테스트
+
+REST 테스트는 **실제 PostgreSQL**을 씁니다. FK 위반을 409로 감싸는 동작처럼 DB가 있어야만 검증되는 것들이 위 우선순위에 들어 있기 때문입니다.
+
+```bash
+docker compose up -d db
+```
+
+DB가 떠 있으면 `subagent_viz_test` 데이터베이스를 자동으로 만들고 마이그레이션까지 적용합니다. **DB가 없으면 REST 테스트만 건너뜁니다** — Docker 없이도 상태 전이 테스트는 그대로 돌아갑니다.
+
+접속 정보를 바꾸려면 `TEST_DATABASE_URL` 환경변수를 쓰세요.
+
+⚠️ 테스트를 건너뛰면 통과한 것처럼 보입니다. PR 전에 출력에 `skipped`가 몇 개인지 확인해 주세요. CI는 Postgres 서비스를 띄우므로 전부 실행됩니다.
 
 ## 6. 브랜치 전략
 
