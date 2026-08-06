@@ -1,0 +1,23 @@
+# 런타임 의존성 (개발/테스트 도구는 requirements-dev.txt 참고)
+
+fastapi>=0.115
+uvicorn[standard]>=0.32
+websockets>=13.0
+
+# DB — asyncpg는 런타임 쿼리용, SQLAlchemy/Alembic은 스키마 정의 및 마이그레이션용
+# 두 계층의 역할 구분은 docs/SPEC-NOTES.md 2번 항목 참고
+asyncpg>=0.30
+sqlalchemy>=2.0
+alembic>=1.14
+
+pydantic>=2.9
+pydantic-settings>=2.6
+
+# multipart는 glTF 모델 업로드(9.2절)에 필요
+python-multipart>=0.0.17
+
+# --- Phase 6 (오케스트레이션 / LLM 연동) 진입 시 주석 해제 ---
+# 지금 켜 두면 CI 설치 시간만 늘고 쓰이지 않는다.
+# langgraph>=0.2
+# anthropic>=0.40
+# openai>=1.55

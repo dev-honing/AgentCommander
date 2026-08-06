@@ -1,0 +1,25 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #0f172a;
+  color: #e2e8f0;
+  font-family:
+    system-ui,
+    -apple-system,
+    'Segoe UI',
+    'Malgun Gothic',
+    sans-serif;
+}
+
+/* 3D 씬은 뷰포트를 가득 채운다. 상태 패널은 그 위에 오버레이된다 (5.2절). */
+main {
+  height: 100%;
+}

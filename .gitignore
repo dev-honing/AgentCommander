@@ -1,0 +1,41 @@
+# --- Python / backend ---
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# 업로드된 glTF 모델은 레포에 커밋하지 않는다 (9.2 / 10.6절)
+backend/uploads/*
+!backend/uploads/.gitkeep
+
+# --- Node / frontend ---
+node_modules/
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+.eslintcache
+
+# 샘플 캐릭터 모델(용량 큼)은 로컬에서만 보관
+frontend/public/models/*
+!frontend/public/models/.gitkeep
+
+# --- 환경변수 (실제 값은 절대 커밋 금지, .example만 커밋) ---
+.env
+.env.*
+!.env.example
+.env.local
+!.env.local.example
+
+# --- 도구 로컬 설정 ---
+# Claude Code의 개인 권한 설정 — 사용자마다 다르므로 커밋하지 않는다
+.claude/settings.local.json
+
+# --- 기타 ---
+.DS_Store
+Thumbs.db
+*.log

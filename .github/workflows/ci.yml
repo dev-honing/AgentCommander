@@ -1,0 +1,44 @@
+# 명세 11.5절
+#
+# Python 3.12 / Node 20 LTS로 버전을 고정한다 — 런타임 버전이 로컬과 CI에서
+# 갈리면 "내 PC에서는 되는데" 문제가 생긴다.
+
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      # 테스트 도구는 requirements-dev.txt에 있고, 그 파일이 requirements.txt를
+      # 포함하므로 한 줄이면 된다.
+      - run: pip install -r backend/requirements-dev.txt
+      - run: ruff check backend/
+      - run: ruff format --check backend/
+      - run: pytest backend/tests/
+
+  frontend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      # next build에 tsc 타입체크가 포함된다
+      - run: npm run build
