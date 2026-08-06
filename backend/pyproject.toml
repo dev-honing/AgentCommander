@@ -12,6 +12,19 @@ select = [
     "B",   # flake8-bugbear
 ]
 
+[tool.ruff.lint.flake8-bugbear]
+# FastAPI는 의존성/파라미터를 인자 기본값으로 선언하는 것이 표준 관용구다.
+# B008("인자 기본값에서 함수 호출 금지")이 이를 오탐하므로 예외로 둔다.
+extend-immutable-calls = [
+    "fastapi.Body",
+    "fastapi.Depends",
+    "fastapi.File",
+    "fastapi.Form",
+    "fastapi.Header",
+    "fastapi.Path",
+    "fastapi.Query",
+]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 asyncio_mode = "auto"

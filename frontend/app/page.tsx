@@ -1,35 +1,40 @@
 'use client'
 
 /**
- * 메인 화면 (명세 7장 Phase 2).
+ * 메인 화면 (명세 7장 Phase 2 / 4 / 5).
  *
- * 3D 씬이 화면을 채우고, 상태 요약은 그 위에 얇게 겹친다.
- * 상세 사이드패널과 전체 목록 패널은 Phase 5에서 붙는다.
+ * 3D 씬이 화면을 채우고, 목록과 상세 패널이 그 위에 겹친다. 상세를 열어도
+ * 씬을 벗어나지 않는다는 것이 5.2절의 요구다.
  */
 
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
+import { AgentDetailPanel } from '@/components/panel/AgentDetailPanel'
+import { AgentListPanel } from '@/components/panel/AgentListPanel'
 import { Scene } from '@/components/scene/Scene'
 import { STATE_COLOR } from '@/lib/protocol'
 import type { AgentState } from '@/lib/protocol'
 import { useAgents } from '@/lib/useAgents'
+import { useSelectedAgent } from '@/lib/useSelectedAgent'
 
 const SUMMARY_ORDER: AgentState[] = ['running', 'retrying', 'waiting', 'error', 'done', 'idle']
 
 export default function Home() {
   const { agents, speech, connected, clickAgent } = useAgents()
-  const [selectedId, setSelectedId] = useState<string | null>(null)
+  const { selectedId, select } = useSelectedAgent()
   const list = useMemo(() => Object.values(agents), [agents])
 
   const selected = selectedId ? agents[selectedId] : undefined
 
   const handleSelect = useCallback(
     (id: string) => {
-      setSelectedId(id)
+      select(id)
       // 클릭을 서버로 올리면 agent_speak가 돌아와 말풍선이 뜬다
       clickAgent(id)
     },
-    [clickAgent],
+    [clickAgent, select],
   )
+
+  const handleDeselect = useCallback(() => select(null), [select])
 
   const counts = useMemo(() => {
     const c = {} as Record<AgentState, number>
@@ -44,7 +49,7 @@ export default function Home() {
         speech={speech}
         selectedId={selectedId}
         onSelect={handleSelect}
-        onDeselect={() => setSelectedId(null)}
+        onDeselect={handleDeselect}
       />
 
       <header className="hud hud-top">
@@ -55,27 +60,25 @@ export default function Home() {
           {connected ? '● 연결됨' : '○ 연결 끊김'}
         </span>
         <span className="hud-spacer" />
-        {selected && (
-          <span className="hud-pill" style={{ color: STATE_COLOR[selected.state] }}>
-            선택됨 · {selected.name}
-          </span>
-        )}
-        <span className="hud-pill">에이전트 {list.length}</span>
-      </header>
-
-      <div className="hud hud-bottom">
         {SUMMARY_ORDER.filter((s) => counts[s]).map((s) => (
           <span key={s} className="hud-count">
             <i style={{ background: STATE_COLOR[s] }} />
             {s} {counts[s]}
           </span>
         ))}
-        {list.length === 0 && (
-          <span className="hud-empty">
-            수신된 에이전트가 없습니다. 백엔드가 실행 중인지 확인하세요.
-          </span>
-        )}
-      </div>
+      </header>
+
+      <AgentListPanel agents={list} selectedId={selectedId} onSelect={handleSelect} />
+
+      {/* key를 주면 다른 에이전트를 고를 때 패널이 새로 마운트되어
+          이전 에이전트의 이력이 남지 않는다 */}
+      {selected && (
+        <AgentDetailPanel
+          key={selected.agent_id}
+          agent={selected}
+          onClose={handleDeselect}
+        />
+      )}
     </main>
   )
 }

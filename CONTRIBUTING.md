@@ -23,7 +23,11 @@ cp backend/.env.example backend/.env
 cp frontend/.env.local.example frontend/.env.local
 ```
 
-`backend/.env`의 `API_KEY`는 로컬 개발용 임의 문자열로 바꿔 주세요. LLM 연동(Phase 6)을 건드리지 않는다면 `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`는 비워 둬도 됩니다.
+`backend/.env`의 `API_KEY`는 로컬 개발용 임의 문자열로 바꾸고, **`frontend/.env.local`의 `BACKEND_API_KEY`에 같은 값을 넣어 주세요.** 두 값이 다르면 로그 뷰어가 401로 실패합니다.
+
+LLM 연동(Phase 6)을 건드리지 않는다면 `ANTHROPIC_API_KEY` / `OPENAI_API_KEY`는 비워 둬도 됩니다.
+
+⚠️ `BACKEND_API_KEY`에 **`NEXT_PUBLIC_` 접두사를 붙이지 마세요.** 붙이는 순간 키가 브라우저 번들에 실려 공개됩니다. 브라우저는 키 없이 같은 오리진의 `/api/backend/...` 프록시만 호출하고, 실제 키는 Next 서버에서만 읽습니다 — [`docs/SPEC-NOTES.md`](./docs/SPEC-NOTES.md) 11번 항목 참고.
 
 ### 2.2 데이터베이스 + 백엔드 (Docker Compose)
 

@@ -17,6 +17,7 @@ import orchestrator
 from config import get_settings
 from hub import hub
 from models import AgentSnapshotMessage, AgentSpeakMessage, AgentSpeakPayload
+from routers import agents, roles
 from storage import ensure_upload_dir
 
 settings = get_settings()
@@ -67,8 +68,8 @@ app.add_middleware(
 # docs/SPEC-NOTES.md 5번 항목 참고.
 app.mount("/models", StaticFiles(directory=settings.upload_dir), name="models")
 
-# TODO(Phase 5): app.include_router(agents.router)
-# TODO(Phase 5): app.include_router(roles.router)
+app.include_router(agents.router)
+app.include_router(roles.router)
 
 
 @app.get("/health")
@@ -79,18 +80,6 @@ async def health() -> dict:
         "agents": len(orchestrator.AGENTS),
         "logs": await db.count_agent_logs(),
     }
-
-
-@app.get("/api/agents/{agent_id}/logs")
-async def agent_logs(agent_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
-    """상태 이력 조회 — 복기용 (명세 9.2절).
-
-    ⚠️ Phase 5에서 routers/agents.py로 옮기면서 API Key 인증이 붙는다.
-       지금은 Phase 1 완료 기준("서버 재시작 후에도 이력 복기 가능")을
-       확인할 수 있게 인증 없이 열어 둔다.
-    """
-    logs = await db.fetch_agent_logs(agent_id, limit=limit, offset=offset)
-    return [log.model_dump(mode="json") for log in logs]
 
 
 def _speech_for(agent_id: str) -> AgentSpeakMessage | None:

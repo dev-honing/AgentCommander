@@ -99,6 +99,286 @@ body {
   color: #8492ad;
 }
 
+/* ── 패널 (씬 위 오버레이) ──────────────────────────────── */
+.panel {
+  position: absolute;
+  z-index: 20;
+  background: rgba(20, 27, 43, 0.93);
+  border: 1px solid #26314a;
+  border-radius: 4px;
+  backdrop-filter: blur(8px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.panel-list {
+  left: 16px;
+  top: 62px;
+  width: min(420px, 38vw);
+  max-height: calc(100vh - 100px);
+}
+.panel-detail {
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: min(400px, 34vw);
+  border-radius: 0;
+  border-right: 0;
+  border-top: 0;
+  border-bottom: 0;
+  box-shadow: -12px 0 40px rgba(0, 0, 0, 0.45);
+  animation: panel-in 180ms ease-out;
+}
+@keyframes panel-in {
+  from {
+    transform: translateX(16px);
+    opacity: 0;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .panel-detail {
+    animation: none;
+  }
+}
+
+.panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 11px 14px;
+  border-bottom: 1px solid #26314a;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #8492ad;
+}
+.panel-hint {
+  margin-left: auto;
+  color: #5b6884;
+  text-transform: none;
+  letter-spacing: 0;
+}
+.panel-x {
+  margin-left: auto;
+  background: none;
+  border: 0;
+  color: #5b6884;
+  cursor: pointer;
+  font-size: 13px;
+  padding: 2px 4px;
+}
+.panel-x:hover {
+  color: #dfe6f2;
+}
+
+/* ── 목록 행 ────────────────────────────────────────────── */
+.rows {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+.row {
+  display: grid;
+  grid-template-columns: 10px minmax(0, 1fr) 68px minmax(0, 1.4fr) 64px 38px;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px;
+  border: 0;
+  border-bottom: 1px solid rgba(38, 49, 74, 0.55);
+  background: none;
+  color: #dfe6f2;
+  text-align: left;
+  font: inherit;
+  cursor: pointer;
+  width: 100%;
+}
+.row:hover {
+  background: rgba(59, 130, 246, 0.08);
+}
+.row:focus-visible {
+  outline: 2px solid var(--c);
+  outline-offset: -2px;
+}
+.row-sel {
+  background: rgba(59, 130, 246, 0.14);
+  box-shadow: inset 2px 0 0 var(--c);
+}
+.row-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--c);
+  box-shadow: 0 0 9px var(--c);
+}
+.row-name {
+  font-size: 13px;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-state {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: var(--c);
+}
+.row-msg {
+  font-size: 12px;
+  color: #8492ad;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.row-bar {
+  height: 5px;
+  border-radius: 99px;
+  background: #1b2436;
+  overflow: hidden;
+}
+.row-bar i {
+  display: block;
+  height: 100%;
+  background: var(--c);
+  border-radius: 99px;
+  transition: width 400ms ease-out;
+}
+.row-pct {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: #8492ad;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+.row-empty {
+  padding: 16px 14px;
+  font-size: 13px;
+  color: #8492ad;
+}
+
+/* ── 상세 패널 ──────────────────────────────────────────── */
+.detail-hero {
+  flex: none;
+  padding: 14px;
+  border-bottom: 1px solid #26314a;
+  display: flex;
+  flex-direction: column;
+  gap: 11px;
+}
+.detail-name {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 17px;
+  font-weight: 700;
+}
+.detail-bar {
+  width: 100%;
+  height: 6px;
+}
+.kv {
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+.kv > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 12px;
+}
+.kv dt {
+  font-family: ui-monospace, Consolas, monospace;
+  color: #5b6884;
+}
+.kv dd {
+  margin: 0;
+  color: #dfe6f2;
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.detail-sec {
+  flex: none;
+  display: flex;
+  gap: 8px;
+  padding: 10px 14px 7px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5b6884;
+}
+
+.loglist {
+  flex: 1;
+  overflow-y: auto;
+}
+.logline {
+  display: grid;
+  grid-template-columns: 62px 74px minmax(0, 1fr);
+  gap: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  border-bottom: 1px solid rgba(38, 49, 74, 0.45);
+}
+.logline time {
+  font-family: ui-monospace, Consolas, monospace;
+  color: #5b6884;
+  font-variant-numeric: tabular-nums;
+}
+.log-state {
+  font-family: ui-monospace, Consolas, monospace;
+  color: var(--c);
+}
+.log-msg {
+  color: #8492ad;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.log-more {
+  width: 100%;
+  padding: 10px;
+  background: none;
+  border: 0;
+  border-top: 1px solid #26314a;
+  color: #8492ad;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.log-more:hover:not(:disabled) {
+  color: #dfe6f2;
+  background: rgba(59, 130, 246, 0.08);
+}
+.log-more:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+.log-empty,
+.log-error {
+  padding: 14px;
+  font-size: 12px;
+  color: #8492ad;
+}
+.log-error {
+  color: #fca5a5;
+}
+
+@media (max-width: 900px) {
+  .panel-list {
+    width: calc(100vw - 32px);
+    max-height: 40vh;
+  }
+  .panel-detail {
+    width: 100vw;
+  }
+}
+
 /* ── 씬 안의 DOM 라벨 (drei <Html>) ───────────────────────
    3D 텍스트 대신 DOM으로 그린다. 한글 렌더링 품질과 원격 폰트
    의존성 제거가 이유다 — 5.2절이 대화풍선을 <Html>로 정한 것과 같다. */
