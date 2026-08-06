@@ -150,6 +150,8 @@ ESLint와 TypeScript를 최신이 아닌 버전에 묶어 둔 것은 일시적�
 | `backend/requirements-dev.txt` | §11.5 CI가 `ruff`와 `pytest`를 실행하지만 이들은 런타임 의존성이 아니다. 프로덕션 이미지에 테스트 도구가 들어가지 않도록 분리한다. |
 | `frontend/lib/protocol.ts` | §2.2 주의사항이 "WebSocket 메시지 스키마를 먼저 고정하라"고 강조한다. 프론트 쪽 계약을 한 파일에 못박아 백엔드 `models.py`와 1:1 대응시킨다. |
 | DB healthcheck + `depends_on: condition` | §8.2의 `depends_on: [db]`는 컨테이너 **기동**만 기다리고 PostgreSQL이 연결을 받을 준비가 됐는지는 보지 않는다. 백엔드가 첫 실행에서 연결 실패로 죽는 전형적인 경합이다. |
+| `psycopg2-binary` 의존성 | Alembic은 동기 드라이버로 붙는다(asyncpg는 런타임 쿼리 전용). 명세는 asyncpg만 언급하지만, 마이그레이션을 돌리려면 동기 드라이버가 반드시 필요하다. |
+| `alembic.ini`를 ASCII로 유지 | Alembic은 이 파일을 **시스템 로케일 인코딩**으로 읽는다. 한국어 Windows에서는 cp949라, UTF-8 한글 주석을 넣으면 `UnicodeDecodeError`로 마이그레이션이 아예 실행되지 않는다. 한글 설명은 `migrations/README.md`에 둔다. |
 
 ---
 
@@ -157,7 +159,7 @@ ESLint와 TypeScript를 최신이 아닌 버전에 묶어 둔 것은 일시적�
 
 명세에서 아직 결정되지 않았거나, 구현이 진행되면 결정해야 하는 것들.
 
-- **`agent_logs` 보관 기간 정책** — §3.2와 §10.2가 "Phase 1에서 함께 설계할 것"이라고 남겨 두었다. 20개 에이전트 × 2초 간격이면 하루 약 86만 행이다. Phase 1 진입 시 반드시 정해야 한다.
+- ~~**`agent_logs` 보관 기간 정책**~~ — **Phase 1에서 30일 보관 + 자동 삭제로 확정.** 백엔드가 기동 직후 1회, 이후 6시간마다 보관 기간이 지난 행을 지운다(`orchestrator.purge_loop`). 수치는 `LOG_RETENTION_DAYS` / `LOG_PURGE_INTERVAL_HOURS` 환경변수로 조절한다. 정리 작업이 `created_at`만으로 스캔하므로 전용 인덱스(`idx_agent_logs_created_at`)를 함께 두었다.
 - **`agent_id` 생성 방식** — §9.3의 `f"agent-{name.lower()}"`는 동일 이름 재생성 시 충돌한다. 명세도 이를 인지하고 "프로토타입 단계엔 허용하되 Phase 6 이후 UUID 전환 권장"으로 남겼다.
 - **WebSocket 인증 시점** — §9장 주의사항이 지적한 대로, REST는 지금 잠그고 WebSocket은 Phase 7b에 잠그면 그 사이 "설정은 막혔는데 상태는 누구나 보는" 비대칭이 생긴다. Phase 7a(Tunnel 공개) **이전에** WebSocket 인증을 앞당기는 것이 맞다.
 - **역할별 애니메이션 클립 이름** — §5.1은 `Working`, `LookAround`, `Retry`, `Alert`, `Cheer`를 예시로 들지만, Mixamo 기성 클립의 실제 이름과 다를 가능성이 높다. Phase 3에서 실제 에셋을 받아 본 뒤 매핑 테이블을 확정한다.

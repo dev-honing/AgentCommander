@@ -16,6 +16,15 @@ class Settings(BaseSettings):
     # DB (8.1절)
     database_url: str = "postgresql://user:pass@localhost:5432/subagent_viz"
 
+    # agent_logs 보관 기간 (일).
+    #
+    # 이 테이블은 append-only라 방치하면 무한정 쌓인다 — 20개 에이전트가
+    # 2초마다 갱신되면 하루 약 86만 행이다. 명세가 "Phase 1에서 함께 설계할 것"
+    # 으로 남겨 둔 항목이며, 30일 보관 + 주기적 자동 삭제로 확정했다.
+    log_retention_days: int = 30
+    # 정리 작업 실행 주기 (시간). 기동 직후 1회 돌고 이후 이 간격으로 반복한다.
+    log_purge_interval_hours: int = 6
+
     # 인증 (9.3절)
     api_key: str = "change-me-local-dev-key"
     ws_allowed_origin: str = "http://localhost:3000"

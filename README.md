@@ -30,7 +30,11 @@ AgentCommander는 각 서브에이전트를 3D 공간의 **캐릭터**로 표현
 ## 빠른 시작
 
 ```bash
-docker compose up -d
+docker compose up -d db
+```
+
+```bash
+cd backend && pip install -r requirements.txt && alembic upgrade head && uvicorn main:app --reload --port 8000
 ```
 
 프론트엔드는 별도로 실행한다.
@@ -75,9 +79,9 @@ cd frontend && npm install && npm run dev
 
 | Phase | 목표 | 완료 기준 | 상태 |
 |---|---|---|---|
-| 0 | 백엔드 목업 + WebSocket 배관 | 더미 상태가 2초마다 프론트에 도달 | ⬜ |
-| 1 | PostgreSQL 영속성 (로컬 Docker) | 서버 재시작 후에도 `agent_logs`로 이력 복기 | ⬜ |
-| 2 | 3D 씬 + 큐브 스텁 | 상태값에 따라 큐브 색상이 실시간 변경 | ⬜ |
+| 0 | 백엔드 목업 + WebSocket 배관 | 더미 상태가 2초마다 프론트에 도달 | ✅ |
+| 1 | PostgreSQL 영속성 (로컬 Docker) | 서버 재시작 후에도 `agent_logs`로 이력 복기 | ✅ |
+| 2 | 3D 씬 + 큐브 스텁 | 상태값에 따라 큐브 색상이 실시간 변경 | ✅ |
 | 3 | 리깅 캐릭터 교체 | 역할별 캐릭터 + 상태별 애니메이션 전환 | ⬜ |
 | 4 | 클릭 상호작용 + 대화풍선 | 클릭 시 `agent_speak` 응답이 말풍선으로 표시 | ⬜ |
 | 5 | 상태 패널 UI | 목록, progress bar, 로그 뷰어 | ⬜ |

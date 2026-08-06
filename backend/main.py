@@ -12,6 +12,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+import db
 import orchestrator
 from config import get_settings
 from hub import hub
@@ -30,19 +31,21 @@ SPEECH_MAX_CHARS = 100
 async def lifespan(app: FastAPI):
     # --- 시작 ---
     ensure_upload_dir()
-    # TODO(Phase 1): await init_pool()
-    orchestrator.reset_agents()
-    loop_task = asyncio.create_task(orchestrator.mock_state_loop())
+    await db.init_pool()
+    await orchestrator.load_agents()
+
+    tasks = [
+        asyncio.create_task(orchestrator.mock_state_loop()),
+        asyncio.create_task(orchestrator.purge_loop()),
+    ]
 
     yield
 
     # --- 종료 ---
-    loop_task.cancel()
-    try:
-        await loop_task
-    except asyncio.CancelledError:
-        pass
-    # TODO(Phase 1): await close_pool()
+    for task in tasks:
+        task.cancel()
+    await asyncio.gather(*tasks, return_exceptions=True)
+    await db.close_pool()
 
 
 app = FastAPI(title="AgentCommander", version="0.1.0", lifespan=lifespan)
@@ -70,7 +73,24 @@ app.mount("/models", StaticFiles(directory=settings.upload_dir), name="models")
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "connections": hub.count, "agents": len(orchestrator.AGENTS)}
+    return {
+        "status": "ok",
+        "connections": hub.count,
+        "agents": len(orchestrator.AGENTS),
+        "logs": await db.count_agent_logs(),
+    }
+
+
+@app.get("/api/agents/{agent_id}/logs")
+async def agent_logs(agent_id: str, limit: int = 50, offset: int = 0) -> list[dict]:
+    """상태 이력 조회 — 복기용 (명세 9.2절).
+
+    ⚠️ Phase 5에서 routers/agents.py로 옮기면서 API Key 인증이 붙는다.
+       지금은 Phase 1 완료 기준("서버 재시작 후에도 이력 복기 가능")을
+       확인할 수 있게 인증 없이 열어 둔다.
+    """
+    logs = await db.fetch_agent_logs(agent_id, limit=limit, offset=offset)
+    return [log.model_dump(mode="json") for log in logs]
 
 
 def _speech_for(agent_id: str) -> AgentSpeakMessage | None:

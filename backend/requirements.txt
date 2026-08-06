@@ -9,6 +9,9 @@ websockets>=13.0
 asyncpg>=0.30
 sqlalchemy>=2.0
 alembic>=1.14
+# Alembic은 동기 드라이버로 붙는다(asyncpg는 런타임 쿼리 전용).
+# 배포 파이프라인에서 alembic upgrade head 를 돌려야 하므로 런타임 의존성에 둔다.
+psycopg2-binary>=2.9
 
 pydantic>=2.9
 pydantic-settings>=2.6

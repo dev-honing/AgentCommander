@@ -16,6 +16,7 @@ import asyncio
 import random
 from datetime import UTC, datetime
 
+import db
 from config import get_settings
 from hub import hub
 from models import STATE_ZONES, AgentState, AgentUpdateMessage, SubAgent
@@ -40,29 +41,41 @@ _ROLE_TASKS = {
 }
 
 
-def reset_agents(count: int | None = None) -> None:
-    """시드 상태로 되돌린다. 테스트와 기동 시점에 쓴다.
+def build_seed_agents(count: int | None = None) -> list[SubAgent]:
+    """목업 시드 에이전트 목록을 만든다 (DB에 넣지는 않는다).
 
     count를 20으로 주면 렌더링 성능 측정용 부하를 만들 수 있다 (10.1절).
     기본값은 설정의 MOCK_AGENT_COUNT다.
+
+    role 값은 반드시 roles 테이블에 있는 것이어야 한다 — 없으면 FK 위반으로
+    저장이 실패한다. 초기 마이그레이션이 넣는 3종과 _SEED가 일치해야 한다.
     """
     if count is None:
         count = get_settings().mock_agent_count
 
-    AGENTS.clear()
+    agents: list[SubAgent] = []
     for i in range(count):
         base_name, role = _SEED[i % len(_SEED)]
         # 시드보다 많이 만들 때만 이름에 번호를 붙여 구분한다
         name = base_name if i < len(_SEED) else f"{base_name}-{i // len(_SEED) + 1}"
-        agent_id = f"agent-{i + 1:03d}"
-        AGENTS[agent_id] = SubAgent(
-            agent_id=agent_id,
-            name=name,
-            role=role,
-            state=AgentState.IDLE,
-            position=STATE_ZONES[AgentState.IDLE],
-            updated_at=datetime.now(UTC),
+        agents.append(
+            SubAgent(
+                agent_id=f"agent-{i + 1:03d}",
+                name=name,
+                role=role,
+                state=AgentState.IDLE,
+                position=STATE_ZONES[AgentState.IDLE],
+                updated_at=datetime.now(UTC),
+            )
         )
+    return agents
+
+
+def reset_agents(count: int | None = None) -> None:
+    """메모리 상태를 시드로 되돌린다. 테스트에서 쓴다."""
+    AGENTS.clear()
+    for agent in build_seed_agents(count):
+        AGENTS[agent.agent_id] = agent
 
 
 def next_state(current: AgentState, retry_count: int) -> AgentState:
@@ -140,6 +153,20 @@ def apply_transition(agent: SubAgent) -> SubAgent:
     return agent
 
 
+async def load_agents() -> None:
+    """DB에서 현재 스냅샷을 읽어 메모리에 올린다 (명세 7장 Phase 1).
+
+    비어 있으면 목업 시드를 넣는다. 이미 있으면 그대로 이어받는다 —
+    서버를 재시작해도 이전 상태에서 계속되어야 복기가 성립한다.
+    """
+    seeded = build_seed_agents()
+    await db.seed_mock_agents(seeded)
+
+    AGENTS.clear()
+    for agent in await db.fetch_agents():
+        AGENTS[agent.agent_id] = agent
+
+
 async def mock_state_loop() -> None:
     """2초마다 임의 에이전트를 한 칸 전이시키고 변경분을 브로드캐스트한다.
 
@@ -147,11 +174,31 @@ async def mock_state_loop() -> None:
     트래픽이 선형으로 커지지 않게 하려는 것이 4장의 설계 의도다.
     """
     while True:
-        agent = random.choice(list(AGENTS.values()))
-        apply_transition(agent)
-        # TODO(Phase 1): await upsert_agent(agent) — 스냅샷과 이력을 함께 기록
-        await hub.broadcast(AgentUpdateMessage(payload=agent).model_dump(mode="json"))
+        if AGENTS:
+            agent = random.choice(list(AGENTS.values()))
+            apply_transition(agent)
+            # 스냅샷(agents)과 이력(agent_logs)에 같은 트랜잭션으로 기록한다
+            await db.upsert_agent(agent)
+            await hub.broadcast(AgentUpdateMessage(payload=agent).model_dump(mode="json"))
         await asyncio.sleep(TICK_SECONDS)
+
+
+async def purge_loop() -> None:
+    """보관 기간이 지난 이력을 주기적으로 지운다 (30일 보관).
+
+    기동 직후 1회 돌고 이후 설정된 간격으로 반복한다. 로그가 방치되면
+    나중에 정리할 때 마이그레이션 비용이 커진다는 것이 명세의 경고다.
+    """
+    settings = get_settings()
+    interval = settings.log_purge_interval_hours * 3600
+    while True:
+        try:
+            removed = await db.purge_old_logs(settings.log_retention_days)
+            if removed:
+                print(f"[purge] {settings.log_retention_days}일 지난 이력 {removed}건 삭제")
+        except Exception as exc:  # noqa: BLE001 — 정리 실패가 서비스를 멈추면 안 된다
+            print(f"[purge] 실패: {exc}")
+        await asyncio.sleep(interval)
 
 
 # TODO(Phase 6): LangGraph 연동
