@@ -5,28 +5,43 @@
    시작/취소를 대칭적으로 관리할 수 있다 — docs/SPEC-NOTES.md 7번 항목.
 """
 
+import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 
+import orchestrator
 from config import get_settings
 from hub import hub
+from models import AgentSnapshotMessage, AgentSpeakMessage, AgentSpeakPayload
 from storage import ensure_upload_dir
 
 settings = get_settings()
+
+# 대화풍선 텍스트 길이 상한 (명세 5.2절).
+# 최근 LLM 응답을 별도 요약 호출 없이 앞부분만 잘라 쓴다 — 추가 비용과
+# 지연이 없다는 것이 이 선택의 이유다.
+SPEECH_MAX_CHARS = 100
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # --- 시작 ---
-    # TODO(Phase 1): await init_pool()
-    # TODO(Phase 0): 목업 상태 루프 태스크 시작 — orchestrator.mock_state_loop()
     ensure_upload_dir()
+    # TODO(Phase 1): await init_pool()
+    orchestrator.reset_agents()
+    loop_task = asyncio.create_task(orchestrator.mock_state_loop())
+
     yield
+
     # --- 종료 ---
-    # TODO(Phase 0): 목업 루프 태스크 cancel
+    loop_task.cancel()
+    try:
+        await loop_task
+    except asyncio.CancelledError:
+        pass
     # TODO(Phase 1): await close_pool()
 
 
@@ -55,12 +70,26 @@ app.mount("/models", StaticFiles(directory=settings.upload_dir), name="models")
 
 @app.get("/health")
 async def health() -> dict:
-    return {"status": "ok", "connections": hub.count}
+    return {"status": "ok", "connections": hub.count, "agents": len(orchestrator.AGENTS)}
+
+
+def _speech_for(agent_id: str) -> AgentSpeakMessage | None:
+    """클릭된 에이전트가 말할 내용을 만든다 (명세 5.2절)."""
+    agent = orchestrator.AGENTS.get(agent_id)
+    if agent is None:
+        return None
+    text = agent.message or "대기 중입니다"
+    return AgentSpeakMessage(
+        payload=AgentSpeakPayload(agent_id=agent_id, text=text[:SPEECH_MAX_CHARS])
+    )
 
 
 @app.websocket("/ws")
 async def ws_endpoint(websocket: WebSocket) -> None:
     """실시간 상태 스트림 (명세 4장).
+
+    접속 시 1회 전체 스냅샷을 보내고, 이후에는 orchestrator가 변경분만
+    브로드캐스트한다.
 
     ⚠️ 이 엔드포인트에는 아직 인증이 없다. REST는 9.3절에 따라 지금부터
        API Key로 잠그지만 WebSocket 인증은 Phase 7b 계획이라, 그 사이에는
@@ -70,12 +99,16 @@ async def ws_endpoint(websocket: WebSocket) -> None:
     """
     await hub.connect(websocket)
     try:
-        # TODO(Phase 0): 접속 시 1회 agent_snapshot 전송
+        snapshot = AgentSnapshotMessage(payload=list(orchestrator.AGENTS.values()))
+        await websocket.send_json(snapshot.model_dump(mode="json"))
+
         while True:
             data = await websocket.receive_json()
-            # TODO(Phase 4): agent_click → agent_speak 응답
             # 생성/종료는 REST가 정본이므로 여기서 처리하지 않는다
             # (docs/SPEC-NOTES.md 6번 항목)
-            _ = data
+            if data.get("type") == "agent_click":
+                speech = _speech_for(data.get("payload", {}).get("agent_id", ""))
+                if speech is not None:
+                    await websocket.send_json(speech.model_dump(mode="json"))
     except WebSocketDisconnect:
         hub.disconnect(websocket)
