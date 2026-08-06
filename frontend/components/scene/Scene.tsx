@@ -31,7 +31,16 @@ function scatterFor(agentId: string): [number, number] {
   return [Math.cos(angle) * radius, Math.sin(angle) * radius]
 }
 
-export function Scene({ agents, onSelect }: { agents: Agent[]; onSelect?: (id: string) => void }) {
+type SceneProps = {
+  agents: Agent[]
+  /** agent_id → 지금 말하고 있는 내용 */
+  speech: Record<string, string>
+  selectedId: string | null
+  onSelect: (id: string) => void
+  onDeselect: () => void
+}
+
+export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: SceneProps) {
   const scatters = useMemo(() => {
     const map: Record<string, [number, number]> = {}
     agents.forEach((a) => (map[a.agent_id] = scatterFor(a.agent_id)))
@@ -39,7 +48,7 @@ export function Scene({ agents, onSelect }: { agents: Agent[]; onSelect?: (id: s
   }, [agents])
 
   return (
-    <Canvas shadows camera={{ position: [9, 8, 11], fov: 45 }}>
+    <Canvas shadows camera={{ position: [9, 8, 11], fov: 45 }} onPointerMissed={onDeselect}>
       <color attach="background" args={['#0b1020']} />
       <fog attach="fog" args={['#0b1020', 18, 42]} />
 
@@ -67,7 +76,9 @@ export function Scene({ agents, onSelect }: { agents: Agent[]; onSelect?: (id: s
           key={agent.agent_id}
           agent={agent}
           scatter={scatters[agent.agent_id] ?? [0, 0]}
-          onClick={() => onSelect?.(agent.agent_id)}
+          speech={speech[agent.agent_id]}
+          selected={selectedId === agent.agent_id}
+          onClick={() => onSelect(agent.agent_id)}
         />
       ))}
 

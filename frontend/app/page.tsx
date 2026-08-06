@@ -7,7 +7,7 @@
  * 상세 사이드패널과 전체 목록 패널은 Phase 5에서 붙는다.
  */
 
-import { useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { Scene } from '@/components/scene/Scene'
 import { STATE_COLOR } from '@/lib/protocol'
 import type { AgentState } from '@/lib/protocol'
@@ -16,8 +16,20 @@ import { useAgents } from '@/lib/useAgents'
 const SUMMARY_ORDER: AgentState[] = ['running', 'retrying', 'waiting', 'error', 'done', 'idle']
 
 export default function Home() {
-  const { agents, connected, clickAgent } = useAgents()
+  const { agents, speech, connected, clickAgent } = useAgents()
+  const [selectedId, setSelectedId] = useState<string | null>(null)
   const list = useMemo(() => Object.values(agents), [agents])
+
+  const selected = selectedId ? agents[selectedId] : undefined
+
+  const handleSelect = useCallback(
+    (id: string) => {
+      setSelectedId(id)
+      // 클릭을 서버로 올리면 agent_speak가 돌아와 말풍선이 뜬다
+      clickAgent(id)
+    },
+    [clickAgent],
+  )
 
   const counts = useMemo(() => {
     const c = {} as Record<AgentState, number>
@@ -27,7 +39,13 @@ export default function Home() {
 
   return (
     <main className="stage">
-      <Scene agents={list} onSelect={clickAgent} />
+      <Scene
+        agents={list}
+        speech={speech}
+        selectedId={selectedId}
+        onSelect={handleSelect}
+        onDeselect={() => setSelectedId(null)}
+      />
 
       <header className="hud hud-top">
         <span className="hud-brand">
@@ -37,6 +55,11 @@ export default function Home() {
           {connected ? '● 연결됨' : '○ 연결 끊김'}
         </span>
         <span className="hud-spacer" />
+        {selected && (
+          <span className="hud-pill" style={{ color: STATE_COLOR[selected.state] }}>
+            선택됨 · {selected.name}
+          </span>
+        )}
         <span className="hud-pill">에이전트 {list.length}</span>
       </header>
 

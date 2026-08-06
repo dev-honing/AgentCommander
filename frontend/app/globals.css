@@ -116,9 +116,65 @@ body {
   border-radius: 3px;
   padding: 2px 7px;
 }
+.nametag-sel {
+  border-color: #64748b;
+  background: rgba(8, 11, 20, 0.92);
+}
 .zonelabel {
   font-size: 11px;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   opacity: 0.85;
+}
+
+/* ── 대화풍선 (drei <Html> 오버레이) ─────────────────────
+   3D 오브젝트가 아닌 DOM으로 그린다 — 텍스트 품질과 유지보수성 때문이다. */
+.bubble {
+  position: relative;
+  max-width: 220px;
+  background: #fbfcff;
+  color: #10151f;
+  font-family:
+    'Malgun Gothic',
+    system-ui,
+    sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.4;
+  padding: 8px 12px;
+  border-radius: 10px;
+  box-shadow: 0 3px 14px rgba(0, 0, 0, 0.45);
+  text-align: center;
+  user-select: none;
+  animation: bubble-in 160ms ease-out;
+}
+/* accent가 지정되면(재시도/실패) 글자색만 바꾼다 — 배경까지 물들이면
+   말풍선이 상태 표시처럼 보여 캐릭터 색과 경쟁한다 */
+.bubble::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -4px;
+  width: 10px;
+  height: 10px;
+  background: #fbfcff;
+  transform: translateX(-50%) rotate(45deg);
+  border-radius: 2px;
+}
+
+@keyframes bubble-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bubble {
+    animation: none;
+  }
 }
