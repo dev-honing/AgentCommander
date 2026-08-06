@@ -121,7 +121,11 @@ body {
   right: 0;
   top: 0;
   bottom: 0;
-  width: min(400px, 34vw);
+  /* 로그 한 줄 = 여백(28) + 시각(142) + 간격(10) + 상태(72) + 간격(10) + 메시지.
+     메시지에 약 165px를 주면 440px이다.
+     ⚠️ Phase 6에서 LLM 응답이 메시지로 들어오면 지금보다 훨씬 길어진다.
+        그때는 이 폭을 다시 넓히거나 메시지를 두 줄로 흘려야 한다. */
+  width: min(440px, 40vw);
   border-radius: 0;
   border-right: 0;
   border-top: 0;
@@ -317,18 +321,26 @@ body {
   flex: 1;
   overflow-y: auto;
 }
+/* 시각(yyyy-mm-dd hh:mm:ss)·상태·메시지를 한 줄에 둔다.
+   시각 칸은 자릿수가 고정이라 폭도 고정이다 — 패널 폭은 이 세 칸이
+   한 줄에 들어가도록 .panel-detail 에서 맞춰 두었다. */
 .logline {
   display: grid;
-  grid-template-columns: 62px 74px minmax(0, 1fr);
-  gap: 8px;
-  padding: 6px 14px;
+  grid-template-columns: 142px 72px minmax(0, 1fr);
+  gap: 10px;
+  padding: 7px 14px;
   font-size: 12px;
+  align-items: baseline;
   border-bottom: 1px solid rgba(38, 49, 74, 0.45);
 }
+/* 로그는 시각을 눈으로 훑는 화면이라 시각이 가장 읽기 쉬워야 한다.
+   보조 정보처럼 흐리게 두면 정작 필요한 값이 안 보인다. */
 .logline time {
   font-family: ui-monospace, Consolas, monospace;
-  color: #5b6884;
+  font-size: 12px;
+  color: #97a5bd;
   font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 .log-state {
   font-family: ui-monospace, Consolas, monospace;
@@ -389,6 +401,7 @@ body {
   user-select: none;
 }
 .nametag {
+  width: max-content;
   font-size: 12px;
   color: #dfe6f2;
   background: rgba(8, 11, 20, 0.72);
@@ -411,6 +424,10 @@ body {
    3D 오브젝트가 아닌 DOM으로 그린다 — 텍스트 품질과 유지보수성 때문이다. */
 .bubble {
   position: relative;
+  /* drei <Html>은 폭이 0인 래퍼 안에 내용을 넣는다. max-width만 두면
+     shrink-to-fit이 0을 기준으로 계산되어 글자가 한 줄에 하나씩 세로로
+     늘어선다. max-content로 내용 폭을 먼저 확보해야 한다. */
+  width: max-content;
   max-width: 220px;
   background: #fbfcff;
   color: #10151f;

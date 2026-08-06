@@ -15,7 +15,14 @@
 import { Html } from '@react-three/drei'
 import { MARKED_ZONES, STATE_COLOR, STATE_ZONES } from '@/lib/protocol'
 
-const ZONE_RADIUS = 1.8
+/**
+ * 존 링 반지름.
+ *
+ * 가장 가까운 두 존은 running(5,0,0)과 waiting(5,0,3)으로 간격이 3이다.
+ * 반지름이 1.5를 넘으면 두 링이 서로 파고들어 어느 구역인지 읽히지 않는다.
+ * 여유를 두고 1.3으로 잡는다 — 존 좌표를 바꾸면 이 값도 함께 검토할 것.
+ */
+const ZONE_RADIUS = 1.3
 
 export function ZoneMarkers() {
   return (

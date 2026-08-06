@@ -16,18 +16,22 @@ import { AgentCube } from './AgentCube'
 import { ZoneMarkers } from './ZoneMarkers'
 
 /**
- * 같은 존에 모인 에이전트들이 한 점에 겹치지 않도록 흩뿌린다.
+ * 같은 존에 모인 에이전트들이 겹치지 않도록 흩뿌린다.
  *
- * agent_id 기반의 결정적 배치라 상태가 바뀌어도 각자의 자리가 유지된다.
- * 무작위로 두면 갱신될 때마다 큐브가 존 안에서 튀어 다닌다.
+ * 배치는 목록 순서(index) 기반이다. agent_id 해시를 쓰면 서로 다른 id가
+ * 비슷한 각도로 떨어져 큐브 두 개가 같은 자리에 겹치는 일이 생긴다 —
+ * 실제로 running 존에서 z-fighting이 났다.
+ *
+ * 황금각(≈137.5°)으로 돌리면 몇 개를 배치하든 이웃과 각도가 최대한 벌어진다.
+ * 해바라기 씨앗 배열과 같은 원리다. 반지름도 √n으로 늘려 밀도를 고르게 한다.
  */
-function scatterFor(agentId: string): [number, number] {
-  let hash = 0
-  for (let i = 0; i < agentId.length; i++) {
-    hash = (hash * 31 + agentId.charCodeAt(i)) | 0
-  }
-  const angle = ((hash % 360) * Math.PI) / 180
-  const radius = 0.45 + (Math.abs(hash >> 8) % 70) / 100 // 0.45 ~ 1.15
+const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
+/** 큐브 한 변이 0.9라 최소 이 정도는 떨어져야 면이 겹치지 않는다 */
+const SCATTER_BASE = 0.62
+
+function scatterFor(index: number): [number, number] {
+  const angle = index * GOLDEN_ANGLE
+  const radius = SCATTER_BASE * Math.sqrt(index + 0.5)
   return [Math.cos(angle) * radius, Math.sin(angle) * radius]
 }
 
@@ -41,9 +45,13 @@ type SceneProps = {
 }
 
 export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: SceneProps) {
+  // agent_id로 정렬한 뒤 순서대로 배치한다. 정렬을 거치지 않으면 목록 순서가
+  // 바뀔 때마다 큐브 자리가 통째로 뒤바뀐다.
   const scatters = useMemo(() => {
     const map: Record<string, [number, number]> = {}
-    agents.forEach((a) => (map[a.agent_id] = scatterFor(a.agent_id)))
+    ;[...agents]
+      .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
+      .forEach((a, i) => (map[a.agent_id] = scatterFor(i)))
     return map
   }, [agents])
 

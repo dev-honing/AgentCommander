@@ -17,9 +17,20 @@ import { STATE_COLOR } from '@/lib/protocol'
 
 const PAGE_SIZE = 30
 
-function formatTime(iso: string): string {
+/**
+ * yyyy-mm-dd hh:mm:ss (로컬 시각).
+ *
+ * toLocaleString은 로케일에 따라 "2026. 8. 7. 00:21:56"처럼 자릿수가 들쭉날쭉해
+ * 세로로 정렬되지 않는다. 로그는 시각을 눈으로 훑는 화면이라 자릿수 고정이
+ * 중요하므로 직접 조립한다.
+ */
+function formatTimestamp(iso: string): string {
   const d = new Date(iso)
-  return d.toLocaleTimeString('ko-KR', { hour12: false })
+  const p = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())} ` +
+    `${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`
+  )
 }
 
 export function AgentDetailPanel({ agent, onClose }: { agent: Agent; onClose: () => void }) {
@@ -137,7 +148,7 @@ export function AgentDetailPanel({ agent, onClose }: { agent: Agent; onClose: ()
             className="logline"
             style={{ '--c': STATE_COLOR[log.state] } as React.CSSProperties}
           >
-            <time>{formatTime(log.created_at)}</time>
+            <time dateTime={log.created_at}>{formatTimestamp(log.created_at)}</time>
             <span className="log-state">
               {log.state}
               {log.state === 'retrying' && ` ${log.retry_count}`}
