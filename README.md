@@ -66,8 +66,8 @@ cd frontend && npm install && npm run dev
 |---|---|
 | 백엔드 | Python 3.12, FastAPI, asyncpg |
 | DB | PostgreSQL 16 (Alembic 마이그레이션) |
-| 프론트엔드 | Next.js (App Router), React, TypeScript |
-| 3D | react-three-fiber, @react-three/drei, three.js |
+| 프론트엔드 | Next.js 16 (App Router), React 19, TypeScript 5, Node 24 |
+| 3D | react-three-fiber 9, @react-three/drei 10, three.js |
 | 오케스트레이션 | LangGraph (Phase 6부터) |
 | LLM | Anthropic / OpenAI (어댑터로 추상화) |
 

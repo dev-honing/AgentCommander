@@ -122,6 +122,23 @@ client.chat.completions.create(model=..., messages=[...])            # OpenAI
 
 ---
 
+## 11. 버전 정책 — §11.5
+
+명세 §11.5는 "Python 3.12 / Node 20 LTS로 버전 고정"을 명시했다. Python 3.12는 그대로 유지하지만, 프론트엔드 쪽은 다음과 같이 조정했다.
+
+| 대상 | 명세 | 실제 | 이유 |
+|---|---|---|---|
+| Node.js | 20 LTS | **24 LTS** | Node 20은 2026년 4월 EOL. Next 16의 최소 요구는 20.9.0이지만 EOL 런타임에 CI를 묶어 둘 이유가 없다 |
+| Next.js | (미지정) | **16.x** | 15.x는 `postcss`·`sharp`를 통해 high 등급 취약점 8건을 전이로 끌고 온다. 16으로 올리면 0건이 된다 |
+| ESLint | (미지정) | **9.x 고정** | 10.x는 `eslint-config-next`가 번들한 `eslint-plugin-react`와 호환되지 않는다 |
+| TypeScript | (미지정) | **5.x 고정** | `typescript-eslint`가 TS 7.0을 지원하지 않는다. 빌드는 TS 7에서 통과하지만 lint가 실행을 거부한다 |
+
+Next 16으로 올리면서 `next lint`가 제거되어 ESLint CLI + flat config(`frontend/eslint.config.mjs`)로 전환했다. `package.json`의 `lint` 스크립트도 `next lint` → `eslint`로 바뀌었다.
+
+ESLint와 TypeScript를 최신이 아닌 버전에 묶어 둔 것은 일시적이다. `typescript-eslint`가 TS 7.1을 지원하면(추적: typescript-eslint#10940) 두 축 모두 올릴 수 있다.
+
+---
+
 ## 명세에 없어 추가한 것
 
 구현상 불가피하거나, 명세가 정한 원칙을 지키려면 필요한 항목들이다.

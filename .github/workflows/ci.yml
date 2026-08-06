@@ -1,7 +1,10 @@
 # 명세 11.5절
 #
-# Python 3.12 / Node 20 LTS로 버전을 고정한다 — 런타임 버전이 로컬과 CI에서
-# 갈리면 "내 PC에서는 되는데" 문제가 생긴다.
+# 런타임 버전을 고정한다 — 로컬과 CI가 갈리면 "내 PC에서는 되는데" 문제가 생긴다.
+#
+# ⚠️ 명세는 Node 20 LTS를 지정했으나 Node 20은 2026년 4월 EOL이라 24 LTS로
+#    올렸다. Next 16이 요구하는 최소치는 20.9.0이다.
+#    docs/SPEC-NOTES.md "버전 정책" 항목 참고.
 
 name: CI
 
@@ -35,10 +38,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '24'
           cache: npm
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
+      # Next 16에서 `next lint`가 제거되어 ESLint CLI를 직접 호출한다
       - run: npm run lint
       # next build에 tsc 타입체크가 포함된다
       - run: npm run build

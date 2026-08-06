@@ -7,7 +7,7 @@ AgentCommander에 기여해 주셔서 감사합니다. 이 문서는 로컬 개�
 | 도구 | 버전 | 비고 |
 |---|---|---|
 | Python | 3.12 | CI가 3.12로 고정되어 있음 |
-| Node.js | 20 LTS | CI가 20으로 고정되어 있음 |
+| Node.js | 24 LTS | CI가 24로 고정. Next 16의 최소 요구는 20.9.0 |
 | Docker | 최신 | PostgreSQL 구동용 |
 
 > 버전을 고정하는 이유: CI와 로컬의 런타임 차이로 인한 "내 PC에서는 되는데" 문제를 차단하기 위함입니다. 다른 버전을 쓰고 싶다면 `.github/workflows/ci.yml`도 함께 바꿔 주세요.
@@ -91,6 +91,17 @@ npm run build --prefix frontend
 ```
 
 `npm run build`에는 TypeScript 타입 체크가 포함됩니다. 빌드가 깨진 채로 PR을 올리지 말아 주세요.
+
+### 프론트엔드 버전 고정 사항
+
+다음 두 가지는 **의도적으로 최신이 아닌** 버전에 묶여 있습니다. 무심코 올리면 lint가 깨집니다.
+
+| 패키지 | 고정 | 이유 |
+|---|---|---|
+| `eslint` | `^9` | 10.x는 `eslint-config-next`가 번들한 `eslint-plugin-react`와 호환되지 않아 룰 로딩 단계에서 죽습니다 |
+| `typescript` | `^5` | `typescript-eslint`가 TS 7.0을 아직 지원하지 않습니다 (7.1 지원 작업 중). 빌드는 TS 7에서도 되지만 lint가 실행 자체를 거부합니다 |
+
+`eslint`는 flat config(`frontend/eslint.config.mjs`)를 씁니다. Next 16에서 `next lint`가 제거되어 ESLint CLI를 직접 호출합니다.
 
 ## 5. 테스트
 
