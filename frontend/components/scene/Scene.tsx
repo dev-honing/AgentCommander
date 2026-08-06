@@ -12,7 +12,8 @@ import { Canvas } from '@react-three/fiber'
 import { Grid, OrbitControls } from '@react-three/drei'
 import { useMemo } from 'react'
 import type { Agent } from '@/lib/protocol'
-import { AgentCube } from './AgentCube'
+import { useRoles } from '@/lib/useRoles'
+import { AgentAvatar } from './AgentAvatar'
 import { ZoneMarkers } from './ZoneMarkers'
 
 /**
@@ -45,6 +46,9 @@ type SceneProps = {
 }
 
 export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: SceneProps) {
+  // role_id → model_path. 등록된 모델이 없으면 해당 역할은 큐브로 그려진다.
+  const roles = useRoles()
+
   // agent_id로 정렬한 뒤 순서대로 배치한다. 정렬을 거치지 않으면 목록 순서가
   // 바뀔 때마다 큐브 자리가 통째로 뒤바뀐다.
   const scatters = useMemo(() => {
@@ -80,9 +84,10 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       <ZoneMarkers />
 
       {agents.map((agent) => (
-        <AgentCube
+        <AgentAvatar
           key={agent.agent_id}
           agent={agent}
+          modelPath={roles[agent.role]}
           scatter={scatters[agent.agent_id] ?? [0, 0]}
           speech={speech[agent.agent_id]}
           selected={selectedId === agent.agent_id}
