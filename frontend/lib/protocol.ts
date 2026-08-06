@@ -111,3 +111,22 @@ export const STATE_COLOR: Record<AgentState, string> = {
   error: '#ef4444',
   done: '#3b82f6',
 }
+
+/**
+ * 상태별 존 좌표 (명세 5.1절).
+ *
+ * ⚠️ backend/models.py의 STATE_ZONES와 같은 값이어야 한다.
+ *    캐릭터의 실제 목표 좌표는 서버가 agent.position으로 내려주므로 여기 값을
+ *    쓰지 않는다. 이 표는 바닥에 존 표식과 라벨을 그리는 용도다.
+ */
+export const STATE_ZONES: Record<AgentState, Position> = {
+  idle: [0, 0, 0],
+  running: [5, 0, 0],
+  waiting: [5, 0, 3],
+  retrying: [5, 0, 0], // running과 같은 구역 — 색과 이펙트로만 구분한다
+  error: [-5, 0, 0],
+  done: [0, 0, -5],
+}
+
+/** 바닥에 표식을 그릴 존. retrying은 running과 겹치므로 제외한다. */
+export const MARKED_ZONES: AgentState[] = ['idle', 'running', 'waiting', 'error', 'done']

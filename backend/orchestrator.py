@@ -23,10 +23,11 @@ from models import STATE_ZONES, AgentState, AgentUpdateMessage, SubAgent
 TICK_SECONDS = 2.0
 
 # Phase 0 목업 시드. Phase 1부터는 roles/agents 테이블에서 읽어 온다.
+# MOCK_AGENT_COUNT가 이 목록보다 크면 역할을 순환하며 이름에 번호를 붙인다.
 _SEED = [
-    ("agent-001", "Researcher", "researcher"),
-    ("agent-002", "Coder", "coder"),
-    ("agent-003", "Reviewer", "reviewer"),
+    ("Researcher", "researcher"),
+    ("Coder", "coder"),
+    ("Reviewer", "reviewer"),
 ]
 
 AGENTS: dict[str, SubAgent] = {}
@@ -39,10 +40,21 @@ _ROLE_TASKS = {
 }
 
 
-def reset_agents() -> None:
-    """시드 상태로 되돌린다. 테스트와 기동 시점에 쓴다."""
+def reset_agents(count: int | None = None) -> None:
+    """시드 상태로 되돌린다. 테스트와 기동 시점에 쓴다.
+
+    count를 20으로 주면 렌더링 성능 측정용 부하를 만들 수 있다 (10.1절).
+    기본값은 설정의 MOCK_AGENT_COUNT다.
+    """
+    if count is None:
+        count = get_settings().mock_agent_count
+
     AGENTS.clear()
-    for agent_id, name, role in _SEED:
+    for i in range(count):
+        base_name, role = _SEED[i % len(_SEED)]
+        # 시드보다 많이 만들 때만 이름에 번호를 붙여 구분한다
+        name = base_name if i < len(_SEED) else f"{base_name}-{i // len(_SEED) + 1}"
+        agent_id = f"agent-{i + 1:03d}"
         AGENTS[agent_id] = SubAgent(
             agent_id=agent_id,
             name=name,

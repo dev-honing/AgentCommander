@@ -1,0 +1,1324 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<!--
+  AgentCommander — 예상 UI 화면 10장 (v1, Phase 0~5)
+  작성: 2026-08-06 · 근거: docs/subagent-viz-design-spec.docx
+  브라우저로 이 파일을 그냥 열면 됩니다. 빌드나 서버가 필요 없습니다.
+-->
+</head>
+<body><title>AgentCommander — 예상 UI 화면 10장</title>
+
+<style>
+  /* ── 문서 토큰 ─────────────────────────────────────────────
+     중성색은 액센트(마젠타) 쪽으로 아주 살짝 기울여 뽑았다.       */
+  :root {
+    --paper:      #f6f3f5;
+    --paper-2:    #ffffff;
+    --ink:        #17141a;
+    --ink-2:      #3a333f;
+    --muted:      #6f6674;
+    --rule:       #e0d8e0;
+    --rule-2:     #cfc4d0;
+    --accent:     #b81f57;
+    --accent-ink: #8d1743;
+    --accent-wash:#f7e6ed;
+    --shadow:     0 1px 2px rgba(23,20,26,.06), 0 12px 32px -12px rgba(23,20,26,.22);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --paper:      #131016;
+      --paper-2:    #1b171e;
+      --ink:        #f2eef3;
+      --ink-2:      #cfc6d2;
+      --muted:      #9a8fa0;
+      --rule:       #2e2833;
+      --rule-2:     #443c4a;
+      --accent:     #ff5c92;
+      --accent-ink: #ff85ab;
+      --accent-wash:#2a1521;
+      --shadow:     0 1px 2px rgba(0,0,0,.5), 0 16px 40px -14px rgba(0,0,0,.7);
+    }
+  }
+  :root[data-theme="light"] {
+    --paper:#f6f3f5; --paper-2:#ffffff; --ink:#17141a; --ink-2:#3a333f;
+    --muted:#6f6674; --rule:#e0d8e0; --rule-2:#cfc4d0;
+    --accent:#b81f57; --accent-ink:#8d1743; --accent-wash:#f7e6ed;
+    --shadow:0 1px 2px rgba(23,20,26,.06), 0 12px 32px -12px rgba(23,20,26,.22);
+  }
+  :root[data-theme="dark"] {
+    --paper:#131016; --paper-2:#1b171e; --ink:#f2eef3; --ink-2:#cfc6d2;
+    --muted:#9a8fa0; --rule:#2e2833; --rule-2:#443c4a;
+    --accent:#ff5c92; --accent-ink:#ff85ab; --accent-wash:#2a1521;
+    --shadow:0 1px 2px rgba(0,0,0,.5), 0 16px 40px -14px rgba(0,0,0,.7);
+  }
+
+  /* ── 앱 화면 내부 토큰 ─────────────────────────────────────
+     목업 속 앱은 다크 단일 테마로 확정한다. 3D 뷰포트가 주인공인
+     도구라 밝은 배경은 애초에 선택지가 아니다. 문서 테마와 무관하게
+     항상 같은 색으로 렌더된다.                                   */
+  .app {
+    --a-void:   #080b14;
+    --a-sky:    #101728;
+    --a-bar:    #0e1420;
+    --a-panel:  #141b2b;
+    --a-panel-2:#1b2436;
+    --a-line:   #26314a;
+    --a-text:   #dfe6f2;
+    --a-dim:    #8492ad;
+    --a-faint:  #5b6884;
+    --s-idle:   #9ca3af;
+    --s-running:#22c55e;
+    --s-waiting:#eab308;
+    --s-retry:  #f97316;
+    --s-error:  #ef4444;
+    --s-done:   #3b82f6;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'Malgun Gothic', 'Apple SD Gothic Neo', system-ui, -apple-system, sans-serif;
+    font-size: 16px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .wrap {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px 120px;
+  }
+
+  /* ── 표제 ───────────────────────────────────────────────── */
+  header.masthead {
+    padding: 80px 0 44px;
+    border-bottom: 2px solid var(--ink);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  .eyebrow {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .eyebrow::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: var(--rule-2);
+  }
+  h1 {
+    margin: 0;
+    font-size: clamp(34px, 6vw, 58px);
+    line-height: 1.08;
+    letter-spacing: -.03em;
+    font-weight: 800;
+    text-wrap: balance;
+  }
+  .standfirst {
+    margin: 0;
+    max-width: 62ch;
+    font-size: 17px;
+    color: var(--ink-2);
+  }
+  .standfirst strong { color: var(--ink); font-weight: 700; }
+
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 28px;
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--muted);
+  }
+  .meta b { color: var(--ink-2); font-weight: 600; }
+
+  /* ── 상태 색 범례 ──────────────────────────────────────── */
+  .legend {
+    margin: 44px 0 0;
+    padding: 22px 24px;
+    background: var(--paper-2);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .legend-title {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11.5px;
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .swatches {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(146px, 1fr));
+    gap: 14px 18px;
+  }
+  .sw { display: flex; gap: 10px; align-items: flex-start; }
+  .sw i {
+    width: 13px; height: 13px; border-radius: 3px; margin-top: 5px;
+    flex: none; display: block;
+  }
+  .sw-name {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 13px; font-weight: 600; color: var(--ink);
+  }
+  .sw-desc { font-size: 12.5px; color: var(--muted); line-height: 1.45; }
+
+  /* ── 플레이트(화면 1장) ────────────────────────────────── */
+  .plate {
+    padding: 68px 0 0;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+  .plate + .plate { border-top: 1px solid var(--rule); margin-top: 68px; }
+
+  .plate-head {
+    display: grid;
+    grid-template-columns: 78px 1fr;
+    gap: 0 22px;
+    align-items: start;
+  }
+  /* 서수는 로드맵 Phase 순서를 그대로 따른다 — 장식이 아니라 진행 순서다 */
+  .ord {
+    font-family: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, serif;
+    font-size: 58px;
+    line-height: .82;
+    font-weight: 400;
+    color: var(--accent);
+    font-variant-numeric: lining-nums tabular-nums;
+    letter-spacing: -.04em;
+  }
+  .plate-titles { display: flex; flex-direction: column; gap: 9px; }
+  .tags { display: flex; flex-wrap: wrap; gap: 7px; }
+  .tag {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border: 1px solid var(--rule-2);
+    border-radius: 2px;
+    color: var(--muted);
+    white-space: nowrap;
+  }
+  .tag-now { border-color: var(--accent); color: var(--accent); background: var(--accent-wash); }
+  h2 {
+    margin: 0;
+    font-size: clamp(21px, 3vw, 27px);
+    line-height: 1.2;
+    letter-spacing: -.02em;
+    font-weight: 700;
+    text-wrap: balance;
+  }
+  .plate-note {
+    margin: 0;
+    max-width: 66ch;
+    font-size: 15px;
+    color: var(--ink-2);
+  }
+
+  .plate-foot {
+    display: grid;
+    grid-template-columns: 78px 1fr;
+    gap: 0 22px;
+  }
+  .points { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 9px; max-width: 70ch; }
+  .points li {
+    font-size: 14.5px;
+    color: var(--ink-2);
+    padding-left: 18px;
+    position: relative;
+    line-height: 1.55;
+  }
+  .points li::before {
+    content: "";
+    position: absolute; left: 0; top: .62em;
+    width: 7px; height: 1.5px; background: var(--accent);
+  }
+  .points code, .plate-note code, .standfirst code {
+    font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+    font-size: .88em;
+    background: var(--accent-wash);
+    color: var(--accent-ink);
+    padding: 1px 5px;
+    border-radius: 2px;
+  }
+
+  /* ── 앱 프레임 ─────────────────────────────────────────── */
+  .frame {
+    border: 1px solid var(--rule-2);
+    border-radius: 4px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    background: #080b14;
+  }
+  .app {
+    container-type: inline-size;
+    aspect-ratio: 16 / 10;
+    display: flex;
+    flex-direction: column;
+    background: var(--a-void);
+    color: var(--a-text);
+    font-family: 'Malgun Gothic', system-ui, sans-serif;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .app-bar {
+    flex: none;
+    height: 7.4cqi;
+    min-height: 26px;
+    background: var(--a-bar);
+    border-bottom: 1px solid var(--a-line);
+    display: flex;
+    align-items: center;
+    gap: 1.6cqi;
+    padding: 0 2.2cqi;
+    z-index: 5;
+  }
+  .brand {
+    font-size: 2cqi;
+    font-weight: 700;
+    letter-spacing: -.01em;
+  }
+  .brand span { color: var(--s-done); }
+  .bar-spacer { flex: 1; }
+  .pill {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.5cqi;
+    padding: .5cqi 1.2cqi;
+    border-radius: 99px;
+    border: 1px solid var(--a-line);
+    color: var(--a-dim);
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: .7cqi;
+  }
+  .pill-live { color: var(--s-running); border-color: color-mix(in srgb, var(--s-running) 40%, transparent); }
+  .pill-dead { color: var(--s-error); border-color: color-mix(in srgb, var(--s-error) 45%, transparent); }
+  .btn {
+    font-size: 1.6cqi;
+    padding: .7cqi 1.4cqi;
+    border-radius: 3px;
+    background: var(--a-panel-2);
+    border: 1px solid var(--a-line);
+    color: var(--a-text);
+    white-space: nowrap;
+  }
+  .btn-key { background: var(--s-done); border-color: var(--s-done); color: #04101f; font-weight: 700; }
+
+  .app-body { flex: 1; position: relative; display: flex; min-height: 0; }
+
+  /* 3D 뷰포트 — 원근 바닥 그리드 */
+  .viewport { flex: 1; position: relative; overflow: hidden; background:
+      radial-gradient(120% 90% at 50% 8%, #1a2440 0%, var(--a-sky) 42%, var(--a-void) 100%); }
+  .floor {
+    position: absolute; left: -30%; right: -30%; bottom: -22%; height: 78%;
+    background-image:
+      repeating-linear-gradient(to right, rgba(120,160,230,.16) 0 1px, transparent 1px 62px),
+      repeating-linear-gradient(to bottom, rgba(120,160,230,.16) 0 1px, transparent 1px 62px);
+    transform: perspective(340px) rotateX(64deg);
+    transform-origin: 50% 100%;
+    mask-image: linear-gradient(to bottom, transparent, #000 32%, #000 78%, transparent);
+  }
+  .horizon {
+    position: absolute; left: 0; right: 0; top: 30%; height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(120,160,230,.28), transparent);
+  }
+
+  /* 존(zone) 마커 */
+  .zone {
+    position: absolute;
+    transform: translate(-50%, -50%);
+    display: flex; flex-direction: column; align-items: center; gap: .6cqi;
+  }
+  .zone-ring {
+    width: 15cqi; height: 4.6cqi;
+    border: 1px dashed color-mix(in srgb, var(--zc, #7e8db0) 55%, transparent);
+    border-radius: 50%;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--zc,#7e8db0) 14%, transparent), transparent);
+  }
+  .zone-label {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.35cqi;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    color: color-mix(in srgb, var(--zc, #7e8db0) 85%, white 5%);
+  }
+
+  /* 배우: 큐브 스텁 / 캐릭터 */
+  .actor {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    display: flex; flex-direction: column; align-items: center; gap: .8cqi;
+    z-index: 2;
+  }
+  .cube {
+    width: 5.4cqi; height: 5.4cqi;
+    background: linear-gradient(150deg,
+        color-mix(in srgb, var(--c) 92%, white 22%),
+        color-mix(in srgb, var(--c) 88%, black 26%));
+    border: 1px solid color-mix(in srgb, var(--c) 60%, white 30%);
+    border-radius: 2px;
+    box-shadow: 0 0 5cqi color-mix(in srgb, var(--c) 34%, transparent);
+  }
+  .figure { width: 4.6cqi; height: 8.4cqi; color: var(--c); filter: drop-shadow(0 0 3cqi color-mix(in srgb, var(--c) 40%, transparent)); }
+  .figure rect, .figure circle { fill: currentColor; }
+  .nametag {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.4cqi;
+    color: var(--a-text);
+    background: rgba(8,11,20,.72);
+    border: 1px solid var(--a-line);
+    border-radius: 2px;
+    padding: .25cqi .8cqi;
+    white-space: nowrap;
+  }
+  .shadowdisc {
+    position: absolute; bottom: -1.1cqi; left: 50%; transform: translateX(-50%);
+    width: 6.4cqi; height: 1.7cqi; border-radius: 50%;
+    background: radial-gradient(closest-side, rgba(0,0,0,.55), transparent);
+  }
+  .selring {
+    position: absolute; bottom: -1.6cqi; left: 50%; transform: translateX(-50%);
+    width: 9.5cqi; height: 2.8cqi; border-radius: 50%;
+    border: 1.5px solid var(--c);
+    box-shadow: 0 0 3cqi color-mix(in srgb, var(--c) 55%, transparent);
+  }
+  .pulse {
+    position: absolute; bottom: -1.6cqi; left: 50%; transform: translateX(-50%);
+    width: 13cqi; height: 3.8cqi; border-radius: 50%;
+    border: 1px solid color-mix(in srgb, var(--c) 45%, transparent);
+  }
+
+  /* 대화풍선 — @react-three/drei의 <Html> 오버레이 */
+  .bubble {
+    position: relative;
+    max-width: 30cqi;
+    background: #fbfcff;
+    color: #10151f;
+    font-size: 1.7cqi;
+    line-height: 1.35;
+    padding: 1.1cqi 1.5cqi;
+    border-radius: 1.2cqi;
+    box-shadow: 0 .4cqi 2cqi rgba(0,0,0,.45);
+    text-align: center;
+  }
+  .bubble::after {
+    content: "";
+    position: absolute; left: 50%; bottom: -.75cqi;
+    width: 1.6cqi; height: 1.6cqi; background: #fbfcff;
+    transform: translateX(-50%) rotate(45deg);
+    border-radius: 2px;
+  }
+  .bubble b { color: var(--bc, #b8412a); }
+
+  /* 오버레이 패널 */
+  .overlay {
+    position: absolute;
+    background: color-mix(in srgb, var(--a-panel) 92%, transparent);
+    border: 1px solid var(--a-line);
+    border-radius: 3px;
+    backdrop-filter: blur(6px);
+    z-index: 4;
+  }
+  .ov-head {
+    display: flex; align-items: center; gap: 1cqi;
+    padding: 1.3cqi 1.6cqi;
+    border-bottom: 1px solid var(--a-line);
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.4cqi;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    color: var(--a-dim);
+  }
+  .ov-head .x { margin-left: auto; color: var(--a-faint); }
+
+  /* 에이전트 목록 행 */
+  .rows { display: flex; flex-direction: column; }
+  .row {
+    display: flex; align-items: center; gap: 1.2cqi;
+    padding: 1.25cqi 1.6cqi;
+    border-bottom: 1px solid color-mix(in srgb, var(--a-line) 55%, transparent);
+  }
+  .row:last-child { border-bottom: 0; }
+  .row.sel { background: color-mix(in srgb, var(--s-done) 12%, transparent); box-shadow: inset 2px 0 0 var(--s-done); }
+  .dot { width: 1.5cqi; height: 1.5cqi; border-radius: 50%; background: var(--c); flex: none;
+         box-shadow: 0 0 1.6cqi color-mix(in srgb, var(--c) 65%, transparent); }
+  .row-name { font-size: 1.65cqi; font-weight: 600; min-width: 11cqi; }
+  .row-state {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.35cqi; color: var(--c); min-width: 9cqi;
+  }
+  .row-msg { font-size: 1.4cqi; color: var(--a-dim); flex: 1; overflow: hidden;
+             text-overflow: ellipsis; white-space: nowrap; }
+  .bar { width: 13cqi; height: .9cqi; border-radius: 99px; background: var(--a-panel-2); flex: none; overflow: hidden; }
+  .bar i { display: block; height: 100%; background: var(--c); border-radius: 99px; }
+  .pct { font-family: ui-monospace, Consolas, monospace; font-size: 1.35cqi;
+         color: var(--a-dim); min-width: 5cqi; text-align: right;
+         font-variant-numeric: tabular-nums; }
+
+  /* Phase 0 텍스트 화면 */
+  .plainpad { padding: 3.4cqi 4cqi; display: flex; flex-direction: column; gap: 2.2cqi; width: 100%; }
+  .plain-h { font-size: 3.2cqi; font-weight: 800; letter-spacing: -.02em; }
+  .plain-status { font-family: ui-monospace, Consolas, monospace; font-size: 1.7cqi; color: var(--s-running); }
+  .plain-list { display: flex; flex-direction: column; gap: 1.7cqi; }
+  .plain-item { display: flex; flex-direction: column; gap: .3cqi; }
+  .plain-top { display: flex; align-items: baseline; gap: 1.2cqi; font-size: 1.9cqi; }
+  .plain-top b { font-weight: 700; }
+  .plain-top span { color: var(--a-dim); font-family: ui-monospace, Consolas, monospace; font-size: 1.6cqi; }
+  .plain-sub { font-size: 1.55cqi; color: var(--a-faint); padding-left: 2.6cqi; }
+
+  /* 사이드패널 */
+  .side {
+    position: absolute; right: 0; top: 0; bottom: 0; width: 33%;
+    background: var(--a-panel);
+    border-left: 1px solid var(--a-line);
+    display: flex; flex-direction: column;
+    z-index: 6;
+    box-shadow: -2cqi 0 5cqi rgba(0,0,0,.45);
+  }
+  .side-hero { padding: 2cqi 2cqi 1.6cqi; border-bottom: 1px solid var(--a-line); display: flex; flex-direction: column; gap: 1.1cqi; }
+  .side-name { font-size: 2.4cqi; font-weight: 700; display: flex; align-items: center; gap: 1cqi; }
+  .kv { display: flex; justify-content: space-between; font-size: 1.45cqi; }
+  .kv dt { color: var(--a-faint); font-family: ui-monospace, Consolas, monospace; }
+  .kv dd { margin: 0; color: var(--a-text); font-variant-numeric: tabular-nums; }
+  .side-sec {
+    padding: 1.3cqi 2cqi .8cqi;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.3cqi; letter-spacing: .1em; text-transform: uppercase; color: var(--a-faint);
+  }
+  .logline {
+    display: grid; grid-template-columns: 8.5cqi 8cqi 1fr;
+    gap: 1cqi; padding: .85cqi 2cqi;
+    font-size: 1.4cqi;
+    border-bottom: 1px solid color-mix(in srgb, var(--a-line) 45%, transparent);
+  }
+  .logline time { font-family: ui-monospace, Consolas, monospace; color: var(--a-faint); font-variant-numeric: tabular-nums; }
+  .logline .st { font-family: ui-monospace, Consolas, monospace; color: var(--c); }
+  .logline .tx { color: var(--a-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 주소창 (URL 동기화 표현) */
+  .urlbar {
+    flex: none; display: flex; align-items: center; gap: 1.2cqi;
+    padding: .9cqi 2.2cqi;
+    background: #05070d;
+    border-bottom: 1px solid var(--a-line);
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.4cqi; color: var(--a-faint);
+  }
+  .urlbar b { color: var(--s-done); font-weight: 400; }
+  .urlbar .lock { color: var(--a-faint); }
+
+  /* 로그 뷰어 테이블 */
+  .tablewrap { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+  .thead, .trow {
+    display: grid;
+    grid-template-columns: 13cqi 13cqi 10cqi 7cqi 1fr;
+    gap: 1.4cqi; padding: 1.1cqi 2.4cqi;
+    font-size: 1.45cqi;
+    align-items: center;
+  }
+  .thead {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.25cqi; letter-spacing: .1em; text-transform: uppercase;
+    color: var(--a-faint);
+    border-bottom: 1px solid var(--a-line);
+    background: var(--a-bar);
+  }
+  .trow { border-bottom: 1px solid color-mix(in srgb, var(--a-line) 40%, transparent); }
+  .trow time, .trow .num { font-family: ui-monospace, Consolas, monospace; color: var(--a-dim); font-variant-numeric: tabular-nums; }
+  .chip {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.25cqi; padding: .3cqi .9cqi; border-radius: 2px;
+    color: var(--c);
+    background: color-mix(in srgb, var(--c) 15%, transparent);
+    border: 1px solid color-mix(in srgb, var(--c) 40%, transparent);
+    justify-self: start;
+  }
+  .trow .tx { color: var(--a-dim); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* 역할 관리 */
+  .rolegrid {
+    padding: 2.6cqi; display: grid; gap: 1.8cqi;
+    grid-template-columns: repeat(3, 1fr);
+    align-content: start; width: 100%;
+  }
+  .rolecard {
+    background: var(--a-panel); border: 1px solid var(--a-line); border-radius: 3px;
+    padding: 1.8cqi; display: flex; flex-direction: column; gap: 1.1cqi;
+  }
+  .rolethumb {
+    height: 11cqi; border-radius: 2px;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 30%, transparent), transparent),
+                repeating-linear-gradient(45deg, #0d1524 0 6px, #101a2c 6px 12px);
+    display: flex; align-items: flex-end; justify-content: center; padding-bottom: 1cqi;
+  }
+  .rolename { font-size: 1.85cqi; font-weight: 700; }
+  .rolepath { font-family: ui-monospace, Consolas, monospace; font-size: 1.3cqi; color: var(--a-faint);
+              overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .roleuse { font-size: 1.35cqi; color: var(--a-dim); }
+  .dropzone {
+    border: 1.5px dashed var(--a-line); border-radius: 3px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: .8cqi; color: var(--a-faint); text-align: center; padding: 1.8cqi;
+  }
+  .dz-1 { font-size: 1.7cqi; color: var(--a-dim); }
+  .dz-2 { font-family: ui-monospace, Consolas, monospace; font-size: 1.3cqi; }
+
+  /* 토스트 */
+  .toast {
+    position: absolute; left: 50%; bottom: 4cqi; transform: translateX(-50%);
+    display: flex; align-items: center; gap: 1.4cqi;
+    background: #1d1216; border: 1px solid color-mix(in srgb, var(--s-error) 45%, transparent);
+    border-radius: 3px; padding: 1.3cqi 1.8cqi; z-index: 8;
+    box-shadow: 0 1cqi 4cqi rgba(0,0,0,.6);
+  }
+  .toast-t { font-size: 1.65cqi; font-weight: 600; }
+  .toast-s { font-size: 1.4cqi; color: var(--a-dim); }
+
+  .banner {
+    position: absolute; left: 0; right: 0; top: 0; z-index: 7;
+    background: color-mix(in srgb, var(--s-error) 22%, #0b0d14);
+    border-bottom: 1px solid color-mix(in srgb, var(--s-error) 50%, transparent);
+    padding: 1cqi 2.2cqi;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.45cqi; color: #ffc9c9;
+    display: flex; align-items: center; gap: 1.2cqi;
+  }
+
+  /* 모달 */
+  .scrim { position: absolute; inset: 0; background: rgba(4,6,12,.62); z-index: 9; }
+  .modal {
+    position: absolute; left: 50%; top: 50%; transform: translate(-50%,-50%);
+    width: 46%; background: var(--a-panel); border: 1px solid var(--a-line);
+    border-radius: 4px; z-index: 10; box-shadow: 0 3cqi 8cqi rgba(0,0,0,.6);
+    display: flex; flex-direction: column;
+  }
+  .modal-body { padding: 2.2cqi; display: flex; flex-direction: column; gap: 1.6cqi; }
+  .field { display: flex; flex-direction: column; gap: .7cqi; }
+  .field label {
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.3cqi; letter-spacing: .08em; text-transform: uppercase; color: var(--a-faint);
+  }
+  .input {
+    background: #0b101c; border: 1px solid var(--a-line); border-radius: 2px;
+    padding: 1.1cqi 1.3cqi; font-size: 1.7cqi; color: var(--a-text);
+  }
+  .input.ph { color: var(--a-faint); }
+  .select { display: flex; align-items: center; justify-content: space-between; }
+  .modal-foot {
+    display: flex; justify-content: flex-end; gap: 1cqi;
+    padding: 1.6cqi 2.2cqi; border-top: 1px solid var(--a-line);
+  }
+
+  /* 미니 좌표 배지 */
+  .coord {
+    position: absolute; left: 2.2cqi; bottom: 2.2cqi;
+    font-family: ui-monospace, Consolas, monospace;
+    font-size: 1.3cqi; color: var(--a-faint);
+    background: rgba(8,11,20,.7); border: 1px solid var(--a-line);
+    border-radius: 2px; padding: .6cqi 1cqi; z-index: 3;
+  }
+
+  /* ── 마무리 ────────────────────────────────────────────── */
+  .closing {
+    margin-top: 76px; padding-top: 34px;
+    border-top: 2px solid var(--ink);
+    display: grid; grid-template-columns: 78px 1fr; gap: 0 22px;
+  }
+  .closing h3 { margin: 0 0 12px; font-size: 20px; letter-spacing: -.01em; }
+  .closing p { margin: 0 0 12px; max-width: 66ch; font-size: 15px; color: var(--ink-2); }
+
+  @media (max-width: 720px) {
+    .plate-head, .plate-foot, .closing { grid-template-columns: 1fr; gap: 12px; }
+    .ord { font-size: 40px; }
+    .rolegrid { grid-template-columns: repeat(2, 1fr); }
+    .app { aspect-ratio: 4 / 3; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="masthead">
+    <div class="eyebrow">AgentCommander · 화면 설계 예상안</div>
+    <h1>예상 UI 화면 10장</h1>
+    <p class="standfirst">
+      설계 명세서와 지금까지 구현된 코드에서 도출한 화면들이다. 1번은 <strong>실제로 지금 돌아가는 화면</strong>이고,
+      나머지 9장은 Phase 2~5에서 만들어질 모습이다. 순서는 로드맵의 Phase 순서를 그대로 따른다.
+    </p>
+    <div class="meta">
+      <span><b>기준</b> subagent-viz-design-spec.docx</span>
+      <span><b>현재</b> Phase 0 완료</span>
+      <span><b>동시 운용</b> 5~20 에이전트</span>
+    </div>
+  </header>
+
+  <section class="legend">
+    <div class="legend-title">여섯 가지 상태 — 모든 화면에서 같은 색을 쓴다</div>
+    <div class="swatches">
+      <div class="sw"><i style="background:#9ca3af"></i><div><div class="sw-name">idle</div><div class="sw-desc">대기. 원점 구역에 모여 있다</div></div></div>
+      <div class="sw"><i style="background:#22c55e"></i><div><div class="sw-name">running</div><div class="sw-desc">정상 진행 중</div></div></div>
+      <div class="sw"><i style="background:#eab308"></i><div><div class="sw-name">waiting</div><div class="sw-desc">외부·타 에이전트 응답 대기</div></div></div>
+      <div class="sw"><i style="background:#f97316"></i><div><div class="sw-name">retrying</div><div class="sw-desc">재시도 중. running과 같은 구역, 다른 연출</div></div></div>
+      <div class="sw"><i style="background:#ef4444"></i><div><div class="sw-name">error</div><div class="sw-desc">재시도 소진 후 최종 실패</div></div></div>
+      <div class="sw"><i style="background:#3b82f6"></i><div><div class="sw-name">done</div><div class="sw-desc">완료. 짧게 축하 후 대기 구역 복귀</div></div></div>
+    </div>
+  </section>
+
+  <!-- ══ 01 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">01</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag tag-now">지금 이 화면이 돕니다</span><span class="tag">Phase 0</span></div>
+        <h2>배관 확인용 텍스트 화면</h2>
+        <p class="plate-note">
+          3D가 붙기 전, WebSocket이 실제로 흐르는지만 눈으로 보는 화면. 2초마다 상태가 바뀌고
+          숫자가 움직이면 백엔드부터 브라우저까지의 경로가 살아 있다는 뜻이다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-body">
+        <div class="plainpad">
+          <div class="plain-h">AgentCommander</div>
+          <div class="plain-status">● WebSocket 연결됨</div>
+          <div class="plain-list">
+            <div class="plain-item">
+              <div class="plain-top" style="--c:var(--s-running)">
+                <span style="color:var(--c)">●</span><b>Researcher</b><span>running · 29%</span>
+              </div>
+              <div class="plain-sub">문서 3건 수집</div>
+            </div>
+            <div class="plain-item">
+              <div class="plain-top" style="--c:var(--s-waiting)">
+                <span style="color:var(--c)">●</span><b>Coder</b><span>waiting · 64%</span>
+              </div>
+              <div class="plain-sub">출처 교차 확인 중</div>
+            </div>
+            <div class="plain-item">
+              <div class="plain-top" style="--c:var(--s-retry)">
+                <span style="color:var(--c)">●</span><b>Reviewer</b><span>retrying · 45%</span>
+              </div>
+              <div class="plain-sub">2번째 재시도 중</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>접속하면 <code>agent_snapshot</code>으로 전체를 한 번 받고, 이후에는 바뀐 에이전트 하나만 <code>agent_update</code>로 온다</li>
+      <li>이 화면은 버려지지 않는다 — Phase 2에서 3D 씬 위의 상태 패널로 자리를 옮긴다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 02 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">02</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 2</span><span class="tag">큐브 스텁</span></div>
+        <h2>3D 씬 — 캐릭터 대신 큐브부터</h2>
+        <p class="plate-note">
+          리깅 캐릭터로 바로 가지 않는다. 먼저 큐브 20개를 띄워 렌더링 성능을 재고, 상태에 따라 색이
+          실시간으로 바뀌는 것까지 확인한다. 바닥의 점선 원이 상태별 존이다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+        <span class="bar-spacer"></span>
+        <span class="pill">에이전트 5</span>
+        <span class="pill">FPS 60</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="horizon"></div>
+        <div class="floor"></div>
+
+        <div class="zone" style="--zc:#9ca3af; left:26%; top:78%">
+          <div class="zone-ring"></div><div class="zone-label">idle · 0,0,0</div>
+        </div>
+        <div class="zone" style="--zc:#22c55e; left:63%; top:72%">
+          <div class="zone-ring"></div><div class="zone-label">running · 5,0,0</div>
+        </div>
+        <div class="zone" style="--zc:#eab308; left:79%; top:88%">
+          <div class="zone-ring"></div><div class="zone-label">waiting · 5,0,3</div>
+        </div>
+        <div class="zone" style="--zc:#ef4444; left:11%; top:60%">
+          <div class="zone-ring"></div><div class="zone-label">error · −5,0,0</div>
+        </div>
+
+        <div class="actor" style="--c:var(--s-running); left:59%; top:71%">
+          <div class="cube"></div><div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-running); left:68%; top:73%">
+          <div class="cube"></div><div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-waiting); left:79%; top:87%">
+          <div class="cube"></div><div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-idle); left:24%; top:77%">
+          <div class="cube"></div><div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-error); left:11%; top:59%">
+          <div class="cube"></div><div class="shadowdisc"></div>
+        </div>
+
+        <div class="coord">camera 6, 5, 6 · OrbitControls</div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>서버는 목표 좌표만 내려주고, 실제 이동은 브라우저가 <code>lerp</code>로 부드럽게 보간한다 — 매 프레임 좌표를 보내지 않아 트래픽이 절약된다</li>
+      <li>존은 역할별이 아니라 <strong>상태별</strong>로 4~5개만 둔다. 역할이 늘어도 공간 구조는 그대로다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 03 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">03</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 3</span><span class="tag">리깅 캐릭터</span></div>
+        <h2>캐릭터가 들어온 씬</h2>
+        <p class="plate-note">
+          역할마다 다른 glTF 모델이 붙고, 상태가 바뀔 때마다 애니메이션이 교차 전환(crossfade)된다.
+          급격한 포즈 전환이 튀어 보이지 않도록 0.3초에 걸쳐 섞는다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+        <span class="bar-spacer"></span>
+        <span class="pill">에이전트 6</span>
+        <span class="btn">역할 관리</span>
+        <span class="btn btn-key">+ 에이전트</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="horizon"></div>
+        <div class="floor"></div>
+
+        <div class="zone" style="--zc:#9ca3af; left:24%; top:80%"><div class="zone-ring"></div><div class="zone-label">idle</div></div>
+        <div class="zone" style="--zc:#22c55e; left:60%; top:70%"><div class="zone-ring"></div><div class="zone-label">running</div></div>
+        <div class="zone" style="--zc:#eab308; left:81%; top:86%"><div class="zone-ring"></div><div class="zone-label">waiting</div></div>
+        <div class="zone" style="--zc:#3b82f6; left:44%; top:53%"><div class="zone-ring"></div><div class="zone-label">done</div></div>
+
+        <div class="actor" style="--c:var(--s-running); left:56%; top:69%">
+          <div class="nametag">Researcher</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-running); left:66%; top:72%">
+          <div class="nametag">Coder</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-waiting); left:81%; top:85%">
+          <div class="nametag">Fetcher</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-idle); left:21%; top:79%">
+          <div class="nametag">Writer</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-done); left:44%; top:52%">
+          <div class="nametag">Reviewer</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+
+        <div class="coord">clip: Working · crossfade 0.3s</div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>에셋이 일정의 최대 병목이다. Mixamo 기성 캐릭터로 먼저 띄우고 커스텀 모델은 뒤로 미룬다</li>
+      <li>동시 20개는 GPU 부하가 크다 — 카메라에서 먼 캐릭터는 애니메이션 갱신 빈도를 낮추는 여지를 남겨 둔다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 04 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">04</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 4</span><span class="tag">상호작용</span></div>
+        <h2>클릭하면 말을 건다</h2>
+        <p class="plate-note">
+          캐릭터를 클릭하면 <code>agent_click</code>이 올라가고 <code>agent_speak</code>가 내려온다.
+          말풍선은 3D 오브젝트가 아니라 HTML 오버레이다 — 한글 텍스트 품질 때문이다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+        <span class="bar-spacer"></span>
+        <span class="pill">선택됨 · Researcher</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="horizon"></div>
+        <div class="floor"></div>
+
+        <div class="zone" style="--zc:#22c55e; left:48%; top:74%"><div class="zone-ring"></div><div class="zone-label">running</div></div>
+        <div class="zone" style="--zc:#eab308; left:80%; top:86%"><div class="zone-ring"></div><div class="zone-label">waiting</div></div>
+        <div class="zone" style="--zc:#9ca3af; left:18%; top:83%"><div class="zone-ring"></div><div class="zone-label">idle</div></div>
+
+        <div class="actor" style="--c:var(--s-running); left:47%; top:72%; z-index:4">
+          <div class="bubble">리서치 결과 3건 찾음</div>
+          <div class="nametag">Researcher · 62%</div>
+          <svg class="figure" viewBox="0 0 20 36" style="width:5.6cqi;height:10.2cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="selring"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-waiting); left:80%; top:85%">
+          <div class="nametag">Fetcher</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+        <div class="actor" style="--c:var(--s-idle); left:17%; top:82%">
+          <div class="nametag">Writer</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+
+        <div class="coord">말풍선 4초 후 자동 소멸</div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>말풍선 문구는 최근 LLM 응답의 앞 100자를 그냥 자른 것이다 — 요약을 위해 LLM을 한 번 더 부르면 비용과 지연이 붙는다</li>
+      <li>클릭 이벤트를 별도 타입으로 분리해 뒀으므로, 나중에 "재시작"·"중단" 같은 조작 명령을 같은 통로로 얹을 수 있다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 05 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">05</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 4</span><span class="tag">재시도 연출</span></div>
+        <h2>재시도는 진행과 다르게 보여야 한다</h2>
+        <p class="plate-note">
+          이 도구의 존재 이유에 가장 가까운 화면이다. 조용히 재시도만 반복하는 에이전트를 놓치지 않도록,
+          <code>retrying</code>은 <code>running</code>과 <strong>같은 구역에 서되 다른 색·다른 링</strong>으로 구분한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+        <span class="bar-spacer"></span>
+        <span class="pill" style="color:#f97316;border-color:rgba(249,115,22,.45)">재시도 1건</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="horizon"></div>
+        <div class="floor"></div>
+
+        <div class="zone" style="--zc:#22c55e; left:55%; top:74%"><div class="zone-ring" style="width:26cqi"></div><div class="zone-label">running / retrying · 5,0,0</div></div>
+
+        <div class="actor" style="--c:var(--s-running); left:44%; top:73%">
+          <div class="nametag">Coder</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+
+        <div class="actor" style="--c:var(--s-retry); left:65%; top:75%; z-index:4">
+          <div class="bubble" style="--bc:#b8542a"><b>3번째 재시도 중</b><br>다음 시도까지 4초</div>
+          <div class="nametag">Reviewer · retry 3/3</div>
+          <svg class="figure" viewBox="0 0 20 36" style="width:5.6cqi;height:10.2cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="selring"></div>
+          <div class="pulse"></div>
+        </div>
+
+        <div class="coord">백오프 1s → 2s → 4s · 소진 시 error</div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>재시도 횟수를 말풍선에 그대로 노출한다. 3/3이 뜨면 다음 실패는 <code>error</code> 확정이라는 신호다</li>
+      <li>구역을 <code>running</code>과 공유하는 이유 — 재시도는 아직 진행 중인 작업이지 실패가 아니다. 위치를 옮기면 그 맥락이 끊긴다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 06 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">06</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 5</span><span class="tag">사이드패널</span></div>
+        <h2>상세는 씬을 벗어나지 않고 옆에서 열린다</h2>
+        <p class="plate-note">
+          클릭한 캐릭터의 전체 이력과 설정이 우측에서 밀려 나온다. 페이지를 갈아타지 않으므로
+          3D 씬의 맥락이 유지된다. 주소창에 <code>?agent=agent-001</code>이 함께 찍힌다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="urlbar">
+        <span class="lock">🔒</span>
+        <span>localhost:3000/<b>?agent=agent-001</b></span>
+      </div>
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+      </div>
+      <div class="app-body">
+        <div class="viewport">
+          <div class="horizon"></div>
+          <div class="floor"></div>
+          <div class="zone" style="--zc:#22c55e; left:40%; top:74%"><div class="zone-ring"></div><div class="zone-label">running</div></div>
+          <div class="actor" style="--c:var(--s-running); left:38%; top:72%">
+            <div class="nametag">Researcher</div>
+            <svg class="figure" viewBox="0 0 20 36" style="width:5.6cqi;height:10.2cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+            <div class="selring"></div>
+          </div>
+          <div class="actor" style="--c:var(--s-idle); left:14%; top:82%">
+            <div class="nametag">Writer</div>
+            <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+            <div class="shadowdisc"></div>
+          </div>
+        </div>
+
+        <aside class="side" style="--c:var(--s-running)">
+          <div class="ov-head">에이전트 상세 <span class="x">✕</span></div>
+          <div class="side-hero">
+            <div class="side-name"><span class="dot"></span>Researcher</div>
+            <div class="bar" style="width:100%"><i style="width:62%"></i></div>
+            <dl class="kv" style="display:flex;flex-direction:column;gap:.6cqi">
+              <div style="display:flex;justify-content:space-between"><dt>agent_id</dt><dd>agent-001</dd></div>
+              <div style="display:flex;justify-content:space-between"><dt>role</dt><dd>researcher</dd></div>
+              <div style="display:flex;justify-content:space-between"><dt>state</dt><dd style="color:var(--c)">running</dd></div>
+              <div style="display:flex;justify-content:space-between"><dt>progress</dt><dd>62%</dd></div>
+              <div style="display:flex;justify-content:space-between"><dt>retry_count</dt><dd>0</dd></div>
+            </dl>
+          </div>
+          <div class="side-sec">상태 이력</div>
+          <div class="logline" style="--c:var(--s-running)"><time>19:04:12</time><span class="st">running</span><span class="tx">출처 교차 확인 중</span></div>
+          <div class="logline" style="--c:var(--s-waiting)"><time>19:04:06</time><span class="st">waiting</span><span class="tx">API 응답 대기</span></div>
+          <div class="logline" style="--c:var(--s-running)"><time>19:03:58</time><span class="st">running</span><span class="tx">문서 3건 수집</span></div>
+          <div class="logline" style="--c:var(--s-retry)"><time>19:03:44</time><span class="st">retrying</span><span class="tx">1번째 재시도 중</span></div>
+          <div class="logline" style="--c:var(--s-running)"><time>19:03:31</time><span class="st">running</span><span class="tx">웹 검색 중...</span></div>
+          <div class="logline" style="--c:var(--s-idle)"><time>19:03:20</time><span class="st">idle</span><span class="tx">대기 중</span></div>
+        </aside>
+      </div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>패널 상태를 주소에 동기화해 두면 링크를 그대로 공유할 수 있고, 새로고침해도 같은 에이전트가 열려 있다</li>
+      <li>이력은 실시간 스트림이 아니라 <code>GET /api/agents/{id}/logs</code>로 따로 읽는다 — 스냅샷 조회와 복기 조회의 책임을 나눠 뒀다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 07 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">07</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 5</span><span class="tag">상태 패널</span></div>
+        <h2>20개를 한눈에 — 씬 위에 겹치는 목록</h2>
+        <p class="plate-note">
+          캐릭터가 많아지면 3D만으로는 누가 멈췄는지 찾기 어렵다. 좌측 오버레이가 정렬된 목록과
+          진행률 막대를 제공한다. 3D는 분위기를, 목록은 정확도를 담당한다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-live">● 연결됨</span>
+        <span class="bar-spacer"></span>
+        <span class="pill">에이전트 6</span>
+        <span class="btn btn-key">+ 에이전트</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="horizon"></div>
+        <div class="floor"></div>
+        <div class="zone" style="--zc:#22c55e; left:62%; top:72%"><div class="zone-ring"></div><div class="zone-label">running</div></div>
+        <div class="zone" style="--zc:#eab308; left:83%; top:86%"><div class="zone-ring"></div><div class="zone-label">waiting</div></div>
+        <div class="actor" style="--c:var(--s-running); left:58%; top:70%"><svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg><div class="shadowdisc"></div></div>
+        <div class="actor" style="--c:var(--s-running); left:68%; top:73%"><svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg><div class="shadowdisc"></div></div>
+        <div class="actor" style="--c:var(--s-waiting); left:83%; top:85%"><svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg><div class="shadowdisc"></div></div>
+
+        <div class="overlay" style="left:2.4cqi; top:2.4cqi; bottom:2.4cqi; width:44%">
+          <div class="ov-head">에이전트 <span class="x">최근 갱신순 ⌄</span></div>
+          <div class="rows">
+            <div class="row" style="--c:var(--s-running)">
+              <span class="dot"></span><span class="row-name">Researcher</span>
+              <span class="row-state">running</span>
+              <span class="row-msg">출처 교차 확인 중</span>
+              <span class="bar"><i style="width:62%"></i></span><span class="pct">62%</span>
+            </div>
+            <div class="row" style="--c:var(--s-retry)">
+              <span class="dot"></span><span class="row-name">Reviewer</span>
+              <span class="row-state">retrying</span>
+              <span class="row-msg">3번째 재시도 중</span>
+              <span class="bar"><i style="width:45%"></i></span><span class="pct">45%</span>
+            </div>
+            <div class="row" style="--c:var(--s-running)">
+              <span class="dot"></span><span class="row-name">Coder</span>
+              <span class="row-state">running</span>
+              <span class="row-msg">테스트 실행</span>
+              <span class="bar"><i style="width:88%"></i></span><span class="pct">88%</span>
+            </div>
+            <div class="row" style="--c:var(--s-waiting)">
+              <span class="dot"></span><span class="row-name">Fetcher</span>
+              <span class="row-state">waiting</span>
+              <span class="row-msg">API 응답 대기</span>
+              <span class="bar"><i style="width:30%"></i></span><span class="pct">30%</span>
+            </div>
+            <div class="row" style="--c:var(--s-error)">
+              <span class="dot"></span><span class="row-name">Summarizer</span>
+              <span class="row-state">error</span>
+              <span class="row-msg">재시도 소진 — 최종 실패</span>
+              <span class="bar"><i style="width:17%"></i></span><span class="pct">17%</span>
+            </div>
+            <div class="row" style="--c:var(--s-idle)">
+              <span class="dot"></span><span class="row-name">Writer</span>
+              <span class="row-state">idle</span>
+              <span class="row-msg">대기 중</span>
+              <span class="bar"><i style="width:0%"></i></span><span class="pct">0%</span>
+            </div>
+          </div>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>목록 상태는 <code>agent_id</code>를 키로 한 Map으로 관리한다 — 20개가 초 단위로 갱신될 때 전체가 다시 그려지면 그게 병목이 된다</li>
+      <li>정렬 기본값은 최근 갱신순. 방금 움직인 것이 위로 올라와야 이상 징후를 먼저 만난다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 08 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">08</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 5</span><span class="tag">복기</span></div>
+        <h2>지나간 일을 되짚는 로그 뷰어</h2>
+        <p class="plate-note">
+          휘발성으로 두지 않기로 한 이유가 이 화면이다. 서버를 껐다 켜도 모든 상태 전이가 남아 있어,
+          "아까 왜 죽었지"를 나중에 확인할 수 있다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="bar-spacer"></span>
+        <span class="pill">전체 에이전트 ⌄</span>
+        <span class="pill">최근 24시간 ⌄</span>
+        <span class="pill" style="color:#ef4444;border-color:rgba(239,68,68,.45)">error만 보기</span>
+      </div>
+      <div class="app-body"><div class="tablewrap">
+        <div class="thead">
+          <span>시각</span><span>에이전트</span><span>상태</span><span>재시도</span><span>메시지</span>
+        </div>
+        <div class="trow" style="--c:var(--s-error)">
+          <time>19:12:40</time><span>Summarizer</span><span class="chip">error</span><span class="num">3</span><span class="tx">재시도 소진 — 최종 실패</span>
+        </div>
+        <div class="trow" style="--c:var(--s-retry)">
+          <time>19:12:33</time><span>Summarizer</span><span class="chip">retrying</span><span class="num">3</span><span class="tx">3번째 재시도 중</span>
+        </div>
+        <div class="trow" style="--c:var(--s-retry)">
+          <time>19:12:29</time><span>Summarizer</span><span class="chip">retrying</span><span class="num">2</span><span class="tx">2번째 재시도 중</span>
+        </div>
+        <div class="trow" style="--c:var(--s-retry)">
+          <time>19:12:27</time><span>Summarizer</span><span class="chip">retrying</span><span class="num">1</span><span class="tx">1번째 재시도 중</span>
+        </div>
+        <div class="trow" style="--c:var(--s-running)">
+          <time>19:12:26</time><span>Summarizer</span><span class="chip">running</span><span class="num">0</span><span class="tx">모듈 작성 중...</span>
+        </div>
+        <div class="trow" style="--c:var(--s-done)">
+          <time>19:12:18</time><span>Coder</span><span class="chip">done</span><span class="num">0</span><span class="tx">작업 완료</span>
+        </div>
+        <div class="trow" style="--c:var(--s-running)">
+          <time>19:12:04</time><span>Coder</span><span class="chip">running</span><span class="num">0</span><span class="tx">테스트 실행</span>
+        </div>
+        <div class="trow" style="--c:var(--s-waiting)">
+          <time>19:11:52</time><span>Fetcher</span><span class="chip">waiting</span><span class="num">0</span><span class="tx">API 응답 대기</span>
+        </div>
+        <div class="trow" style="--c:var(--s-running)">
+          <time>19:11:47</time><span>Researcher</span><span class="chip">running</span><span class="num">0</span><span class="tx">웹 검색 중...</span>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>재시도 3회가 연달아 찍힌 뒤 <code>error</code>가 오는 이 패턴이 로그에서 가장 자주 보게 될 모양이다</li>
+      <li>이 테이블은 계속 쌓인다. 20개 에이전트 × 2초면 하루 약 86만 행 — 보관 기간 정책을 Phase 1에서 같이 정해야 한다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 09 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">09</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">Phase 5</span><span class="tag">역할 · 에셋</span></div>
+        <h2>역할을 추가하는 것이 캐릭터를 등록하는 일</h2>
+        <p class="plate-note">
+          역할은 코드에 박혀 있지 않다. 화면에서 만들고 glTF 파일을 올리면 그때부터 새 캐릭터가 씬에 선다.
+          이미 쓰이고 있는 역할은 삭제되지 않는다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="bar-spacer"></span>
+        <span class="pill">역할 4</span>
+        <span class="btn btn-key">+ 역할 추가</span>
+      </div>
+      <div class="app-body"><div class="rolegrid">
+        <div class="rolecard" style="--c:var(--s-running)">
+          <div class="rolethumb"><svg class="figure" viewBox="0 0 20 36" style="width:5cqi;height:9cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg></div>
+          <div class="rolename">Researcher</div>
+          <div class="rolepath">/models/researcher.glb · 8.2MB</div>
+          <div class="roleuse">사용 중 2</div>
+        </div>
+        <div class="rolecard" style="--c:var(--s-done)">
+          <div class="rolethumb"><svg class="figure" viewBox="0 0 20 36" style="width:5cqi;height:9cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg></div>
+          <div class="rolename">Coder</div>
+          <div class="rolepath">/models/coder.glb · 11.4MB</div>
+          <div class="roleuse">사용 중 3</div>
+        </div>
+        <div class="rolecard" style="--c:var(--s-waiting)">
+          <div class="rolethumb"><svg class="figure" viewBox="0 0 20 36" style="width:5cqi;height:9cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg></div>
+          <div class="rolename">Reviewer</div>
+          <div class="rolepath">/models/reviewer.glb · 9.7MB</div>
+          <div class="roleuse">사용 중 1</div>
+        </div>
+        <div class="rolecard" style="--c:var(--s-idle)">
+          <div class="rolethumb"><svg class="figure" viewBox="0 0 20 36" style="width:5cqi;height:9cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg></div>
+          <div class="rolename">Writer</div>
+          <div class="rolepath">모델 미등록</div>
+          <div class="roleuse">사용 중 0 · 삭제 가능</div>
+        </div>
+        <div class="rolecard dropzone" style="grid-column: span 2">
+          <div class="dz-1">여기에 .glb 파일을 끌어다 놓기</div>
+          <div class="dz-2">최대 20MB · .glb / .gltf</div>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>사용 중인 역할을 지우려 하면 <code>409</code>와 함께 "사용 중인 에이전트가 있습니다"가 뜬다 — DB 제약 위반 원문을 그대로 보여주지 않는다</li>
+      <li>역할은 3~5종으로 시작한다. 하나 늘 때마다 캐릭터 에셋을 새로 준비해야 하므로, 색·액세서리 변형으로 다양성을 주는 쪽이 싸다</li>
+    </ul></div></div>
+  </section>
+
+  <!-- ══ 10 ══════════════════════════════════════════════ -->
+  <section class="plate">
+    <div class="plate-head">
+      <div class="ord">10</div>
+      <div class="plate-titles">
+        <div class="tags"><span class="tag">전 구간</span><span class="tag">실패 상태</span></div>
+        <h2>끊겼을 때와 죽었을 때</h2>
+        <p class="plate-note">
+          잘 도는 화면만 그려두면 정작 필요한 순간에 설계가 없다. 연결이 끊긴 경우와 에이전트가
+          최종 실패한 경우를 각각 어떻게 알릴지 미리 정해 둔다.
+        </p>
+      </div>
+    </div>
+
+    <div class="frame"><div class="app">
+      <div class="app-bar">
+        <span class="brand">Agent<span>Commander</span></span>
+        <span class="pill pill-dead">○ 연결 끊김</span>
+        <span class="bar-spacer"></span>
+        <span class="pill">마지막 갱신 19:12:40</span>
+      </div>
+      <div class="app-body"><div class="viewport">
+        <div class="banner">⚠ 서버와의 연결이 끊겼습니다 — 화면의 상태는 마지막으로 받은 값입니다</div>
+        <div class="horizon"></div>
+        <div class="floor"></div>
+
+        <div class="zone" style="--zc:#ef4444; left:30%; top:70%"><div class="zone-ring"></div><div class="zone-label">error · −5,0,0</div></div>
+        <div class="zone" style="--zc:#9ca3af; left:66%; top:80%"><div class="zone-ring"></div><div class="zone-label">idle</div></div>
+
+        <div class="actor" style="--c:var(--s-error); left:30%; top:69%; z-index:4">
+          <div class="bubble" style="--bc:#c0322f"><b>재시도 소진 — 최종 실패</b><br>19:12:40 · retry 3/3</div>
+          <div class="nametag">Summarizer</div>
+          <svg class="figure" viewBox="0 0 20 36" style="width:5.6cqi;height:10.2cqi"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="selring"></div>
+          <div class="pulse"></div>
+        </div>
+
+        <div class="actor" style="--c:var(--s-idle); left:66%; top:79%; opacity:.55">
+          <div class="nametag">Writer</div>
+          <svg class="figure" viewBox="0 0 20 36"><circle cx="10" cy="6" r="5.2"/><rect x="4.5" y="12.5" width="11" height="14" rx="4.5"/><rect x="5.6" y="26" width="3.4" height="9" rx="1.7"/><rect x="11" y="26" width="3.4" height="9" rx="1.7"/></svg>
+          <div class="shadowdisc"></div>
+        </div>
+
+        <div class="toast">
+          <div>
+            <div class="toast-t">재연결 시도 중</div>
+            <div class="toast-s">4초 후 다시 시도합니다 · 3번째</div>
+          </div>
+          <span class="btn">지금 시도</span>
+        </div>
+      </div></div>
+    </div></div>
+
+    <div class="plate-foot"><div><ul class="points">
+      <li>끊긴 동안 화면을 비우지 않는다. 마지막 값을 흐리게 유지하고 "이건 과거 값"이라고 명시하는 쪽이 안전하다</li>
+      <li>재연결에 성공하면 서버가 스냅샷을 다시 보내므로 정합성은 자동으로 회복된다 — 클라이언트가 따로 맞출 필요가 없다</li>
+    </ul></div></div>
+  </section>
+
+  <div class="closing">
+    <div class="ord">→</div>
+    <div>
+      <h3>여기서부터의 순서</h3>
+      <p>
+        1번은 이미 돈다. 다음은 2번 — 큐브 스텁으로 3D 씬을 세우고 20개 동시 렌더링 성능을 먼저 재 본다.
+        캐릭터 에셋은 그 측정이 끝난 뒤에 붙인다.
+      </p>
+      <p>
+        여기 실린 배치·문구·비율은 확정이 아니라 <strong>합의를 위한 초안</strong>이다.
+        특히 존 배치와 상태 색은 지금 바꾸는 비용이 가장 싸다.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+</body>
+</html>

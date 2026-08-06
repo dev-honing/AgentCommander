@@ -89,6 +89,7 @@ cd frontend && npm install && npm run dev
 
 - [설계 명세서](./docs/subagent-viz-design-spec.docx) — 전체 설계 원본 (11장)
 - [명세 해석 노트](./docs/SPEC-NOTES.md) — 명세 내 불일치와 구현 시 채택한 해석
+- [UI 목업](./docs/mockups/) — 예상 화면 10장. 브라우저로 바로 열리는 단일 HTML
 - [기여 가이드](./CONTRIBUTING.md)
 
 ## 기여

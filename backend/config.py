@@ -27,6 +27,11 @@ class Settings(BaseSettings):
     max_model_size: int = 20 * 1024 * 1024  # 20MB
     allowed_model_ext: tuple[str, ...] = (".glb", ".gltf")
 
+    # 목업 에이전트 수 (Phase 0~5).
+    # 명세 10.1절은 "Phase 3 진입 전에 큐브 스텁 상태로 20개 동시 렌더링
+    # 성능을 먼저 측정할 것"을 권고한다. 이 값을 20으로 올리면 바로 잰다.
+    mock_agent_count: int = 3
+
     # 재시도 정책 (11.2절) — 최대 3회, 1s → 2s → 4s
     max_retry_count: int = 3
     retry_initial_interval: float = 1.0
