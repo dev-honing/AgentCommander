@@ -41,13 +41,20 @@ Position = tuple[float, float, float]
 #
 # retrying은 running과 같은 좌표를 쓴다. 위치가 아니라 애니메이션과
 # 이펙트로만 구분한다.
+#
+# ⚠️ 좌표를 바꾸면 frontend/lib/protocol.ts 의 STATE_ZONES 와 존 표식 반지름도
+#    함께 조정해야 한다. 한쪽만 고치면 캐릭터와 바닥 표식이 어긋난다.
+#
+# 간격을 넓게 잡은 이유: 한 존에 5개만 모여도 캐릭터와 이름표가 겹쳤다.
+# 가장 가까운 두 존(running↔waiting)이 9만큼 떨어져 있어 반지름 3.6짜리
+# 표식을 그려도 서로 파고들지 않는다.
 STATE_ZONES: dict[AgentState, Position] = {
     AgentState.IDLE: (0.0, 0.0, 0.0),
-    AgentState.RUNNING: (5.0, 0.0, 0.0),
-    AgentState.WAITING: (5.0, 0.0, 3.0),
-    AgentState.RETRYING: (5.0, 0.0, 0.0),
-    AgentState.ERROR: (-5.0, 0.0, 0.0),
-    AgentState.DONE: (0.0, 0.0, -5.0),
+    AgentState.RUNNING: (12.0, 0.0, 0.0),
+    AgentState.WAITING: (12.0, 0.0, 9.0),
+    AgentState.RETRYING: (12.0, 0.0, 0.0),
+    AgentState.ERROR: (-12.0, 0.0, 0.0),
+    AgentState.DONE: (0.0, 0.0, -12.0),
 }
 
 

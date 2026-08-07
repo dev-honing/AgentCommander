@@ -128,11 +128,11 @@ export const STATE_COLOR: Record<AgentState, string> = {
  */
 export const STATE_ZONES: Record<AgentState, Position> = {
   idle: [0, 0, 0],
-  running: [5, 0, 0],
-  waiting: [5, 0, 3],
-  retrying: [5, 0, 0], // running과 같은 구역 — 색과 이펙트로만 구분한다
-  error: [-5, 0, 0],
-  done: [0, 0, -5],
+  running: [12, 0, 0],
+  waiting: [12, 0, 9],
+  retrying: [12, 0, 0], // running과 같은 구역 — 색과 이펙트로만 구분한다
+  error: [-12, 0, 0],
+  done: [0, 0, -12],
 }
 
 /** 바닥에 표식을 그릴 존. retrying은 running과 겹치므로 제외한다. */

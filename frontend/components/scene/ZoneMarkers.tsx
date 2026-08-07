@@ -19,11 +19,13 @@ import { Z_ZONE_LABEL } from './overlayDepth'
 /**
  * 존 링 반지름.
  *
- * 가장 가까운 두 존은 running(5,0,0)과 waiting(5,0,3)으로 간격이 3이다.
- * 반지름이 1.5를 넘으면 두 링이 서로 파고들어 어느 구역인지 읽히지 않는다.
- * 여유를 두고 1.3으로 잡는다 — 존 좌표를 바꾸면 이 값도 함께 검토할 것.
+ * 가장 가까운 두 존은 running(12,0,0)과 waiting(12,0,9)으로 간격이 9다.
+ * 반지름이 4.5를 넘으면 두 링이 서로 파고들어 어느 구역인지 읽히지 않는다.
+ * 여유를 두고 3.6으로 잡는다 — 존 좌표를 바꾸면 이 값도 함께 검토할 것.
+ *
+ * 20개가 한 존에 모여도 흩뿌리기 반경이 약 3.5라 링 안에 들어온다.
  */
-const ZONE_RADIUS = 1.3
+const ZONE_RADIUS = 3.6
 
 export function ZoneMarkers() {
   return (
@@ -44,9 +46,9 @@ export function ZoneMarkers() {
               <meshBasicMaterial color={color} transparent opacity={0.07} />
             </mesh>
             <Html
-              position={[0, 0.02, ZONE_RADIUS + 0.5]}
+              position={[0, 0.02, ZONE_RADIUS + 0.9]}
               center
-              distanceFactor={13}
+              distanceFactor={22}
               pointerEvents="none"
               zIndexRange={Z_ZONE_LABEL}
             >

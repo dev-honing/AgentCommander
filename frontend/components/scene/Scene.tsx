@@ -32,6 +32,8 @@ const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 const SCATTER_BASE = 0.8
 /** 이 픽셀 이내로 움직였으면 드래그가 아니라 클릭으로 본다 */
 const CLICK_SLOP = 5
+/** 존 다섯 개의 대략적인 중심. 카메라가 이 지점을 본다 */
+const ORBIT_TARGET: [number, number, number] = [2.5, 0, -1]
 
 function scatterFor(index: number): [number, number] {
   const angle = index * GOLDEN_ANGLE
@@ -85,7 +87,8 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
   return (
     <Canvas
       shadows
-      camera={{ position: [9, 8, 11], fov: 45 }}
+      // 존이 x∈[-12,12], z∈[-12,9] 에 퍼져 있어 전체가 한눈에 들어올 거리
+      camera={{ position: [22, 21, 30], fov: 45 }}
       // 시점을 회전하다 빈 공간에서 손을 떼도 click 이 발생한다. 그대로 두면
       // 카메라를 돌릴 때마다 선택이 풀리므로, 거의 움직이지 않은 경우만
       // "빈 곳을 눌렀다"로 본다.
@@ -100,21 +103,21 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       }}
     >
       <color attach="background" args={['#0b1020']} />
-      <fog attach="fog" args={['#0b1020', 18, 42]} />
+      <fog attach="fog" args={['#0b1020', 45, 110]} />
 
       <ambientLight intensity={0.55} />
-      <directionalLight position={[6, 12, 6]} intensity={1.1} castShadow />
-      <directionalLight position={[-8, 5, -6]} intensity={0.3} color="#6f8cff" />
+      <directionalLight position={[14, 24, 14]} intensity={1.1} castShadow />
+      <directionalLight position={[-18, 10, -14]} intensity={0.3} color="#6f8cff" />
 
       <Grid
-        args={[60, 60]}
+        args={[120, 120]}
         cellSize={1}
         cellThickness={0.6}
         cellColor="#1e2b4a"
-        sectionSize={5}
+        sectionSize={6}
         sectionThickness={1}
         sectionColor="#2f4a7a"
-        fadeDistance={38}
+        fadeDistance={95}
         fadeStrength={1}
         infiniteGrid
       />
@@ -141,11 +144,14 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       <OrbitControls
         makeDefault
         enablePan
+        // 원점이 아니라 존 다섯 개의 중심을 본다. 원점을 보면 waiting(12,0,9)이
+        // 화면 아래로 밀려 입력창에 가린다.
+        target={ORBIT_TARGET}
         mouseButtons={{ LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.PAN }}
         minPolarAngle={0.2}
         maxPolarAngle={Math.PI / 2.15}
-        minDistance={6}
-        maxDistance={30}
+        minDistance={8}
+        maxDistance={70}
       />
     </Canvas>
   )
