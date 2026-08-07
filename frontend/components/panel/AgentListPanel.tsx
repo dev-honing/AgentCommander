@@ -122,7 +122,9 @@ export function AgentListPanel({ agents, selectedId, onSelect }: Props) {
 
         {agents.length === 0 && (
           <div className="row-empty">
-            수신된 에이전트가 없습니다. 백엔드가 실행 중인지 확인하세요.
+            돌고 있는 에이전트가 없습니다.
+            <br />
+            아래에 질문을 넣으면 조사가 시작됩니다.
           </div>
         )}
       </div>

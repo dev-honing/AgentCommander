@@ -188,11 +188,20 @@ async def load_agents() -> None:
     ⚠️ 실행에서 갈라져 나온 에이전트(parent_id 있음)는 올리지 않는다.
        일회용 작업자라 재시작 시점에 이미 그래프가 죽어 있고, 씬에 올리면
        끝난 일이 계속 서 있는 것처럼 보인다. DB 기록은 그대로 남아 복기된다.
+
+    ⚠️ 데모 모드가 꺼져 있으면 목업 에이전트도 올리지 않는다. 상태를 흔들
+       루프가 없어서 화면에 멈춘 채로 서 있게 되는데, 그건 "고장난 에이전트"로
+       읽힌다. 씬이 비어 있는 편이 정직하다 — 아무것도 안 돌고 있다는 뜻이니까.
     """
-    seeded = build_seed_agents()
-    await db.seed_mock_agents(seeded)
+    demo = get_settings().demo_mode
+
+    if demo:
+        await db.seed_mock_agents(build_seed_agents())
 
     AGENTS.clear()
+    if not demo:
+        return
+
     for agent in await db.fetch_agents():
         if agent.parent_id is None:
             AGENTS[agent.agent_id] = agent

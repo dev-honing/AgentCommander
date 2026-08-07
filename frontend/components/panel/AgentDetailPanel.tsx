@@ -10,7 +10,7 @@
  * 복기 조회의 책임을 나눠 둔 3.2절 설계 때문이다.
  */
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { fetchAgentLogs } from '@/lib/api'
 import type { Agent, AgentLog } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
@@ -43,36 +43,50 @@ export function AgentDetailPanel({ agent, onClose }: { agent: Agent; onClose: ()
   const [error, setError] = useState<string | null>(null)
 
   const agentId = agent.agent_id
+  /** 겹친 요청 중 마지막 것만 반영하기 위한 순번 */
+  const seq = useRef(0)
 
   /** 상태 변경이 전부 await 이후에만 일어나도록 짠 fetch */
   const fetchPage = useCallback(
     async (offset: number) => {
+      const mine = ++seq.current
       try {
         const page = await fetchAgentLogs(agentId, PAGE_SIZE, offset)
+        // 늦게 도착한 옛 응답이 새 결과를 덮어쓰지 않게 한다
+        if (mine !== seq.current) return
         setTotal(page.total)
         setLogs((prev) => (offset === 0 ? page.items : [...prev, ...page.items]))
       } catch (e) {
+        if (mine !== seq.current) return
         setError(e instanceof Error ? e.message : '이력을 불러오지 못했습니다')
       } finally {
-        setLoading(false)
+        if (mine === seq.current) setLoading(false)
       }
     },
     [agentId],
   )
 
-  // 마운트 시 첫 페이지 조회.
+  // "더 보기"로 펼쳐 둔 상태인지. 펼쳐서 옛 이력을 읽는 중이라면 자동 갱신이
+  // 목록을 되감아 버리므로 건드리지 않는다.
+  const expanded = logs.length > PAGE_SIZE
+
+  // 에이전트가 갱신될 때마다 이력을 다시 읽는다.
   //
-  // 다른 에이전트를 고르면 부모가 key로 이 컴포넌트를 새로 마운트하므로
-  // (page.tsx 참고) 여기서 이전 목록을 지울 필요가 없다.
+  // 마운트 때 한 번만 읽으면 패널을 열어 둔 동안 이력이 멈춰 있다. 상태
+  // 필드는 WebSocket 으로 실시간 갱신되는데 이력만 옛것이라, 최신순 목록
+  // 맨 위에 오래된 상태가 계속 남아 "패널이 안 바뀐다"로 읽혔다.
+  //
+  // updated_at 을 의존성으로 쓰는 이유: 상태뿐 아니라 진행률·메시지만 바뀌어도
+  // 이력에는 새 줄이 쌓이기 때문이다.
   //
   // set-state-in-effect 규칙은 "이펙트에서 데이터를 가져오지 말라"는 취지라
-  // await 이후의 상태 갱신까지 잡는다. 다만 ?agent=... 링크를 새로고침으로
-  // 열면 클릭 없이 패널이 뜨므로 마운트 시점 조회를 없앨 수 없다. 데이터
-  // 라이브러리나 Suspense 캐시를 도입하기 전까지는 이 형태가 최선이다.
+  // await 이후의 갱신까지 잡는다. 다만 ?agent=... 링크를 새로고침으로 열면
+  // 클릭 없이 패널이 뜨므로 이 조회를 없앨 수 없다.
   useEffect(() => {
+    if (expanded) return
     // eslint-disable-next-line react-hooks/set-state-in-effect -- 위 주석 참고
     void fetchPage(0)
-  }, [fetchPage])
+  }, [fetchPage, expanded, agent.updated_at])
 
   /** "더 보기" — 이벤트 핸들러이므로 즉시 상태를 바꿔도 된다 */
   const loadMore = useCallback(() => {

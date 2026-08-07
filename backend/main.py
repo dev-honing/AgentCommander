@@ -37,8 +37,10 @@ async def lifespan(app: FastAPI):
 
     tasks: list[asyncio.Task] = []
     if settings.background_tasks_enabled:
-        tasks.append(asyncio.create_task(orchestrator.mock_state_loop()))
         tasks.append(asyncio.create_task(orchestrator.purge_loop()))
+        # 목업은 데모 모드에서만 돈다. 실제 작업과 섞이면 화면이 거짓말을 한다.
+        if settings.demo_mode:
+            tasks.append(asyncio.create_task(orchestrator.mock_state_loop()))
 
     yield
 

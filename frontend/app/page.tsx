@@ -61,6 +61,7 @@ export default function Home() {
           {connected ? '● 연결됨' : '○ 연결 끊김'}
         </span>
         <span className="hud-spacer" />
+        {connected && list.length === 0 && <span className="hud-pill">대기 중</span>}
         {SUMMARY_ORDER.filter((s) => counts[s]).map((s) => (
           <span key={s} className="hud-count">
             <i style={{ background: STATE_COLOR[s] }} />

@@ -10,7 +10,8 @@
 
 import { Canvas } from '@react-three/fiber'
 import { Grid, OrbitControls } from '@react-three/drei'
-import { useMemo } from 'react'
+import { MOUSE } from 'three'
+import { useMemo, useRef } from 'react'
 import type { Agent } from '@/lib/protocol'
 import { useRoles } from '@/lib/useRoles'
 import { AgentAvatar } from './AgentAvatar'
@@ -29,6 +30,8 @@ import { ZoneMarkers } from './ZoneMarkers'
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
 /** 캐릭터 어깨너비를 감안한 최소 간격. 큐브(한 변 0.9)에도 넉넉하다 */
 const SCATTER_BASE = 0.8
+/** 이 픽셀 이내로 움직였으면 드래그가 아니라 클릭으로 본다 */
+const CLICK_SLOP = 5
 
 function scatterFor(index: number): [number, number] {
   const angle = index * GOLDEN_ANGLE
@@ -48,6 +51,8 @@ type SceneProps = {
 export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: SceneProps) {
   // role_id → model_path. 등록된 모델이 없으면 해당 역할은 큐브로 그려진다.
   const roles = useRoles()
+  /** 마지막 pointerdown 위치 — 드래그와 클릭을 가르는 데 쓴다 */
+  const pressAt = useRef<[number, number] | null>(null)
 
   // 흩뿌리기는 **존별로** 계산한다.
   //
@@ -78,7 +83,22 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
   }, [agents])
 
   return (
-    <Canvas shadows camera={{ position: [9, 8, 11], fov: 45 }} onPointerMissed={onDeselect}>
+    <Canvas
+      shadows
+      camera={{ position: [9, 8, 11], fov: 45 }}
+      // 시점을 회전하다 빈 공간에서 손을 떼도 click 이 발생한다. 그대로 두면
+      // 카메라를 돌릴 때마다 선택이 풀리므로, 거의 움직이지 않은 경우만
+      // "빈 곳을 눌렀다"로 본다.
+      onPointerDown={(e) => {
+        pressAt.current = [e.clientX, e.clientY]
+      }}
+      onPointerMissed={(e) => {
+        const from = pressAt.current
+        if (!from) return
+        const moved = Math.hypot(e.clientX - from[0], e.clientY - from[1])
+        if (moved < CLICK_SLOP) onDeselect()
+      }}
+    >
       <color attach="background" args={['#0b1020']} />
       <fog attach="fog" args={['#0b1020', 18, 42]} />
 
@@ -113,9 +133,15 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
         />
       ))}
 
+      {/* 마우스 조작
+            휠         — 확대/축소
+            휠 드래그  — 화면 이동 (기본값은 dolly 라 바꿔야 한다)
+            좌 드래그  — 시점 회전
+            우 드래그  — 화면 이동 (편의상 함께 열어 둔다) */}
       <OrbitControls
         makeDefault
-        enablePan={false}
+        enablePan
+        mouseButtons={{ LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.PAN }}
         minPolarAngle={0.2}
         maxPolarAngle={Math.PI / 2.15}
         minDistance={6}
