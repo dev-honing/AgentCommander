@@ -34,6 +34,21 @@ const EDGES: [number, number, number, number][] = [
   [HALF, 0, EDGE, PAD + EDGE],
 ]
 
+/**
+ * 벽 높이.
+ *
+ * 캐릭터 키(타일 한 칸 폭 기준 약 1.9)보다 낮아야 한다. 벽이 더 높으면
+ * 뒷줄에 선 캐릭터가 벽에 묻힌다.
+ */
+const WALL_H = 0.9
+/** 벽 두께 */
+const WALL_T = 0.22
+/** 뒤쪽 두 면 — [중심 x, 중심 z, 폭, 두께] */
+const WALLS: [number, number, number, number][] = [
+  [0, -HALF, PAD + WALL_T, WALL_T],
+  [-HALF, 0, WALL_T, PAD + WALL_T],
+]
+
 export function ZoneMarkers() {
   return (
     <group>
@@ -56,6 +71,24 @@ export function ZoneMarkers() {
               <planeGeometry args={[PAD, PAD]} />
               <meshBasicMaterial color={color} transparent opacity={0.09} />
             </mesh>
+
+            {/* 뒤쪽 두 면에만 낮은 벽을 세운다.
+                바닥 표식만으로는 구역이 "바닥에 그린 선"에 머무는데, 벽이 서면
+                방으로 읽힌다. 네 면을 다 두르면 카메라를 어느 쪽으로 돌려도
+                앞벽이 캐릭터를 가리므로 뒤쪽만 남긴다. */}
+            {WALLS.map(([wx, wz, w, d], i) => (
+              <group key={i} position={[wx, 0, wz]}>
+                <mesh position={[0, WALL_H / 2, 0]} castShadow receiveShadow>
+                  <boxGeometry args={[w, WALL_H, d]} />
+                  <meshLambertMaterial color="#212c46" />
+                </mesh>
+                {/* 윗면 띠 — 어느 구역의 벽인지 색으로 알린다 */}
+                <mesh position={[0, WALL_H + 0.04, 0]}>
+                  <boxGeometry args={[w, 0.08, d]} />
+                  <meshBasicMaterial color={color} transparent opacity={0.7} />
+                </mesh>
+              </group>
+            ))}
             <Html
               position={[0, 0.02, PAD / 2 + 0.85]}
               center
