@@ -175,7 +175,24 @@ graph.add_node("call_llm", node, retry_policy=retry)
 
 ---
 
-## 13. 버전 정책 — §11.5
+## 13. 비교 대상 프로젝트의 사실 정정 — §1.3
+
+명세 §1.3의 비교표를 실제 저장소로 확인한 결과, 두 군데를 고쳐야 한다.
+
+| 명세 서술 | 확인된 사실 |
+|---|---|
+| Pixel Agents = "VS Code 확장 (로컬 실행)" | VS Code 확장 **또는 단독 브라우저 CLI**. 둘 다 제공한다 |
+| Pixel Agents = "Canvas 2D **프로시저럴** 렌더링" | 렌더링은 Canvas 2D가 맞지만 캐릭터는 **스프라이트 에셋 팩**이다 (JIK-A-4의 Metro City). 사용자가 외부 팩을 추가로 불러올 수도 있다 |
+
+프로시저럴이 아니라 스프라이트 팩이라는 점은 우리 에셋 결정에 직접 영향을 준다 — **픽셀아트 경로는 이미 검증된 방식이고 쓸 만한 팩도 존재한다**는 뜻이기 때문이다. SkyOffice도 LimeZu 팩을 쓴다.
+
+나머지 비교(관찰자 vs 오케스트레이터, SkyOffice는 사람 대상)는 확인 결과 정확하다. Pixel Agents 로드맵에 "orchestrator characters"가 있으나 현재는 관찰 전용이다.
+
+기술 스택 보강: Pixel Agents는 React 19 + Vite + Canvas 2D에 Fastify 백엔드, SkyOffice는 Phaser 3 + Colyseus + React/Redux + PeerJS다. 둘 다 MIT.
+
+---
+
+## 14. 버전 정책 — §11.5
 
 명세 §11.5는 "Python 3.12 / Node 20 LTS로 버전 고정"을 명시했다. Python 3.12는 그대로 유지하지만, 프론트엔드 쪽은 다음과 같이 조정했다.
 

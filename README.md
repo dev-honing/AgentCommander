@@ -21,6 +21,23 @@ AgentCommander는 각 서브에이전트를 3D 공간의 **캐릭터**로 표현
 - 재시도(retrying)와 정상 진행(running)을 시각적으로 구분 — 조용한 실패를 놓치지 않도록
 - 모든 상태 전이를 append-only 로그로 영속화 → 사후 복기 가능
 
+## 비슷해 보이는 프로젝트와 무엇이 다른가
+
+컨셉이 겹쳐 보이는 오픈소스가 둘 있다. 먼저 짚어 둔다.
+
+| | [Pixel Agents](https://github.com/pablodelucca/pixel-agents) | [SkyOffice](https://github.com/kevinshen56714/SkyOffice) | AgentCommander |
+|---|---|---|---|
+| 형태 | VS Code 확장 + 단독 CLI | 독립 웹앱 (가상 오피스) | 독립 웹앱 (배포형) |
+| 하는 일 | 이미 돌고 있는 에이전트를 **관찰·시각화** | **사람** 아바타 기반 화상협업 | 에이전트를 **직접 오케스트레이션**하고 상태를 시각화 |
+| 제어 | 관찰만 — 에이전트 생성이나 재시도 정책 설정 불가 | 해당 없음 (사람이 조작) | REST로 생성·역할 관리·재시도 정책까지 |
+| 이력 | — | — | 상태 전이를 DB에 append-only 로 보관, 사후 복기 |
+| 기술 | React + Canvas 2D, Fastify | Phaser 3 + Colyseus + PeerJS | Next.js + react-three-fiber + FastAPI + PostgreSQL + LangGraph |
+| 라이선스 | MIT | MIT | MIT |
+
+**Pixel Agents는 관찰자(observer), AgentCommander는 오케스트레이터(orchestrator)다.** Pixel Agents는 Claude Code 같은 기존 도구가 만든 활동을 들여다보는 창이고, 이 프로젝트는 LangGraph로 에이전트를 직접 만들고 실패·재시도 정책까지 통제한 뒤 그 결과를 보여준다. 무엇을 볼 것인가가 아니라 무엇을 시킬 것인가에서 갈린다.
+
+**SkyOffice는 사람이 모이는 공간이다.** 에이전트 개념이 없다. 다만 타일맵 기반 픽셀아트 오피스 UI는 좋은 선례라 참고 대상으로 남겨 둔다.
+
 ## 데모
 
 > 🚧 Phase 2~4 완료 시 스크린샷 / GIF 삽입 예정
