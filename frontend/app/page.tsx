@@ -113,6 +113,12 @@ export default function Home() {
   )
 }
 
-// TODO(Phase 3): AgentCube → AgentCharacter(리깅 glTF)로 교체.
-//   교체 전에 큐브 20개 동시 렌더링 성능을 먼저 측정한다 (명세 10.1절).
-//   backend/.env 의 MOCK_AGENT_COUNT 를 20으로 올리면 바로 확인할 수 있다.
+// Phase 3 — 표현 교체는 AgentAvatar 한 곳에서 갈린다. 상단 전환기나 ?avatar= 로
+//   도트/리깅 캐릭터/큐브를 바꿔 볼 수 있다.
+//
+//   명세 10.1절이 조건으로 건 20개 동시 렌더링 측정은 끝났다 (최저 fps:
+//   큐브 100 / 도트 98 / 리깅 73). 셋 다 통과라 성능이 방향을 정해 주지는
+//   않는다 — 측정 조건과 함정은 docs/에셋-방향-비교.md 참고.
+//
+//   남은 것: 어느 방향으로 갈지, 그리고 역할별 실제 에셋.
+//   DEMO_MODE=true MOCK_AGENT_COUNT=20 으로 띄우고 ?fps=1 을 붙이면 다시 잰다.
