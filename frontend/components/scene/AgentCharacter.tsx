@@ -19,7 +19,7 @@
 import { Html, useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
-import type { AnimationClip, Group, Object3D } from 'three'
+import type { AnimationClip, Bone, Group, Object3D } from 'three'
 import { Box3, MathUtils, Vector3 } from 'three'
 // three는 SkeletonUtils를 객체가 아니라 명명 export로 내보낸다
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js'
@@ -33,6 +33,11 @@ const LERP_SPEED = 2.4
 const TARGET_HEIGHT = 1.6
 /** 클립 전환 시간 — 급격한 포즈 전환(pop)을 막는다 */
 const FADE_SECONDS = 0.3
+
+/** 에셋이 예상 밖일 때 화면이 통째로 깨지지 않도록 상식 범위로 묶는다 */
+function clampScale(scale: number): number {
+  return Math.min(Math.max(scale, 0.01), 100)
+}
 
 /**
  * 원하는 클립 이름을 실제 에셋의 클립 목록에 맞춰 해석한다.
@@ -78,11 +83,37 @@ export function AgentCharacter({
   // 스킨드 메시는 일반 clone()으로는 뼈대 참조가 깨지므로 SkeletonUtils를 쓴다.
   const model = useMemo(() => cloneSkinned(scene) as Object3D, [scene])
 
-  // 팩마다 단위가 달라 실제 크기를 재서 맞춘다
+  // 팩마다 단위가 달라 실제 크기를 재서 맞춘다.
+  //
+  // ⚠️ Box3.setFromObject 로 재면 안 된다. 스킨드 메시는 뼈대가 형태를 만드는데
+  //    Box3는 "지오메트리 × 노드 행렬"만 보고, 그 값이 SkeletonUtils.clone 전후로
+  //    달라진다. 원본으로 재면 1.80(정상)인데 복제본으로 재면 훨씬 작게 나와
+  //    배율이 90배까지 뛰고 캐릭터가 화면을 뒤덮었다.
+  //
+  //    뼈대의 월드 좌표는 복제해도 그대로라 이쪽이 안정적이다. Mixamo 모델은
+  //    원점이 발밑에 있으므로, 최상단 뼈의 높이가 곧 키다.
   const fitScale = useMemo(() => {
-    const box = new Box3().setFromObject(model)
-    const size = box.getSize(new Vector3())
-    return size.y > 0 ? TARGET_HEIGHT / size.y : 1
+    model.updateWorldMatrix(true, true)
+
+    const probe = new Vector3()
+    let top = 0
+    let bones = 0
+
+    model.traverse((obj) => {
+      if ((obj as Bone).isBone) {
+        bones += 1
+        obj.getWorldPosition(probe)
+        top = Math.max(top, probe.y)
+      }
+    })
+
+    // 뼈대가 없는 정적 메시는 바운딩 박스로 물러난다
+    if (bones === 0) {
+      const size = new Box3().setFromObject(model).getSize(new Vector3())
+      return size.y > 1e-4 ? clampScale(TARGET_HEIGHT / size.y) : 1
+    }
+
+    return top > 1e-4 ? clampScale(TARGET_HEIGHT / top) : 1
   }, [model])
 
   const { actions } = useAnimations(animations as AnimationClip[], group)
