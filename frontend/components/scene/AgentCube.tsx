@@ -20,6 +20,7 @@ import type { Agent } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
 import { DialogueBubble } from './DialogueBubble'
 import { Nametag } from './Nametag'
+import { useHover } from './useHover'
 
 /** 목표 지점에 도달하는 속도. 값이 클수록 빠르게 붙는다. */
 const LERP_SPEED = 2.4
@@ -33,10 +34,13 @@ type Props = {
   /** 지금 말하고 있는 내용 (agent_speak 수신 시) */
   speech?: string
   selected?: boolean
+  /** 같은 존이 붐빌 때 참 — 이름표를 접는다 */
+  dense?: boolean
   onClick?: () => void
 }
 
-export function AgentCube({ agent, scatter, speech, selected, onClick }: Props) {
+export function AgentCube({ agent, scatter, speech, selected, dense, onClick }: Props) {
+  const hover = useHover()
   const group = useRef<Group>(null)
   const material = useRef<MeshStandardMaterial>(null)
   const pulse = useRef<Mesh>(null)
@@ -93,8 +97,8 @@ export function AgentCube({ agent, scatter, speech, selected, onClick }: Props) 
           e.stopPropagation()
           onClick?.()
         }}
-        onPointerOver={() => (document.body.style.cursor = 'pointer')}
-        onPointerOut={() => (document.body.style.cursor = 'auto')}
+        onPointerOver={hover.onPointerOver}
+        onPointerOut={hover.onPointerOut}
       >
         <boxGeometry args={[0.9, 0.9, 0.9]} />
         <meshStandardMaterial
@@ -121,11 +125,14 @@ export function AgentCube({ agent, scatter, speech, selected, onClick }: Props) 
         <meshBasicMaterial ref={pulseMat} color={color} transparent opacity={0.5} />
       </mesh>
 
-      {/* 말풍선이 떠 있는 동안에는 이름표를 감춘다 — 겹쳐서 읽기 어려워진다 */}
+      {/* 말풍선이 떠 있는 동안에는 이름표를 감춘다 — 겹쳐서 읽기 어려워진다.
+          존이 붐빌 때도 접고, 가리키거나 고른 것만 보여 준다. */}
       {speech ? (
         <DialogueBubble text={speech} accent={isRetrying || isError ? color : undefined} />
       ) : (
-        <Nametag agent={agent} y={0.95} selected={selected} />
+        (!dense || selected || hover.hovered) && (
+          <Nametag agent={agent} y={0.95} selected={selected} />
+        )
       )}
     </group>
   )

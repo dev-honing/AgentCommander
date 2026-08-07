@@ -27,6 +27,8 @@ type Props = {
   scatter: [number, number]
   speech?: string
   selected?: boolean
+  /** 같은 존이 붐빌 때 참 — 이름표를 접는다 */
+  dense?: boolean
   onClick?: () => void
 }
 

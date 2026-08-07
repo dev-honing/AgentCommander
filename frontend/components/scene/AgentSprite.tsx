@@ -20,6 +20,7 @@ import { STATE_COLOR } from '@/lib/protocol'
 import { TILE_WORLD } from '@/lib/tileTexture'
 import { DialogueBubble } from './DialogueBubble'
 import { Nametag } from './Nametag'
+import { useHover } from './useHover'
 
 const LERP_SPEED = 2.4
 /**
@@ -46,10 +47,13 @@ type Props = {
   scatter: [number, number]
   speech?: string
   selected?: boolean
+  /** 같은 존이 붐빌 때 참 — 이름표를 접는다 */
+  dense?: boolean
   onClick?: () => void
 }
 
-export function AgentSprite({ agent, scatter, speech, selected, onClick }: Props) {
+export function AgentSprite({ agent, scatter, speech, selected, dense, onClick }: Props) {
+  const hover = useHover()
   const group = useRef<Group>(null)
   const sprite = useRef<SpriteType>(null)
   const elapsed = useRef(0)
@@ -100,8 +104,8 @@ export function AgentSprite({ agent, scatter, speech, selected, onClick }: Props
           e.stopPropagation()
           onClick?.()
         }}
-        onPointerOver={() => (document.body.style.cursor = 'pointer')}
-        onPointerOut={() => (document.body.style.cursor = 'auto')}
+        onPointerOver={hover.onPointerOver}
+        onPointerOut={hover.onPointerOut}
       >
         <spriteMaterial
           map={frames[0]}
@@ -133,6 +137,8 @@ export function AgentSprite({ agent, scatter, speech, selected, onClick }: Props
         </mesh>
       )}
 
+      {/* 말풍선은 언제나 띄운다. 이름표는 존이 붐비면 접고, 가리키거나 고른
+          캐릭터만 보여 준다 — 20개가 모이면 이름표끼리 겹쳐 아무것도 안 읽힌다. */}
       {speech ? (
         <DialogueBubble
           text={speech}
@@ -140,7 +146,9 @@ export function AgentSprite({ agent, scatter, speech, selected, onClick }: Props
           accent={isRetrying || isError ? color : undefined}
         />
       ) : (
-        <Nametag agent={agent} y={HEIGHT + 0.3} selected={selected} />
+        (!dense || selected || hover.hovered) && (
+          <Nametag agent={agent} y={HEIGHT + 0.3} selected={selected} />
+        )
       )}
     </group>
   )

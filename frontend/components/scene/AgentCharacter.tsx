@@ -28,6 +28,7 @@ import type { Agent, AgentState } from '@/lib/protocol'
 import { STATE_CLIP, STATE_COLOR } from '@/lib/protocol'
 import { DialogueBubble } from './DialogueBubble'
 import { Nametag } from './Nametag'
+import { useHover } from './useHover'
 
 const LERP_SPEED = 2.4
 /** 캐릭터 목표 높이(월드 단위). 큐브 한 변 0.9와 어울리는 크기 */
@@ -66,6 +67,8 @@ type Props = {
   scatter: [number, number]
   speech?: string
   selected?: boolean
+  /** 같은 존이 붐빌 때 참 — 이름표를 접는다 */
+  dense?: boolean
   onClick?: () => void
 }
 
@@ -75,8 +78,10 @@ export function AgentCharacter({
   scatter,
   speech,
   selected,
+  dense,
   onClick,
 }: Props) {
+  const hover = useHover()
   const group = useRef<Group>(null)
   const { scene, animations } = useGLTF(modelUrl(modelPath))
 
@@ -155,8 +160,8 @@ export function AgentCharacter({
           e.stopPropagation()
           onClick?.()
         }}
-        onPointerOver={() => (document.body.style.cursor = 'pointer')}
-        onPointerOut={() => (document.body.style.cursor = 'auto')}
+        onPointerOver={hover.onPointerOver}
+        onPointerOut={hover.onPointerOut}
       />
 
       {/* 상태 색은 캐릭터 발밑 링으로 표시한다.
@@ -180,7 +185,9 @@ export function AgentCharacter({
           accent={isRetrying || isError ? color : undefined}
         />
       ) : (
-        <Nametag agent={agent} y={TARGET_HEIGHT + 0.35} selected={selected} />
+        (!dense || selected || hover.hovered) && (
+          <Nametag agent={agent} y={TARGET_HEIGHT + 0.35} selected={selected} />
+        )
       )}
     </group>
   )
