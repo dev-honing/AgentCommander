@@ -84,7 +84,7 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
   // role_id → model_path. 등록된 모델이 없으면 해당 역할은 큐브로 그려진다.
   const roles = useRoles()
   // 캐릭터 표현 방식 (?avatar=sprite|character|cube)
-  const mode = useAvatarMode()
+  const { mode } = useAvatarMode()
   /** 마지막 pointerdown 위치 — 드래그와 클릭을 가르는 데 쓴다 */
   const pressAt = useRef<[number, number] | null>(null)
 

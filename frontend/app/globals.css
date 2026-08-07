@@ -112,6 +112,34 @@ body {
   color: #8492ad;
 }
 
+/* 캐릭터 표현 전환기 — 에셋 방향을 정하는 동안만 둔다 */
+.avatar-switch {
+  display: inline-flex;
+  /* .hud 는 씬 조작을 가리지 않으려고 pointer-events 를 꺼 둔다.
+     그 안에서 유일하게 누를 수 있는 요소이므로 여기서만 다시 켠다. */
+  pointer-events: auto;
+  border: 1px solid #26314a;
+  background: rgba(16, 23, 40, 0.72);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.avatar-switch button {
+  font-family: inherit;
+  font-size: 12px;
+  padding: 4px 11px;
+  border: 0;
+  background: transparent;
+  color: #8492ad;
+  cursor: pointer;
+}
+.avatar-switch button:hover {
+  color: #d7e0f0;
+}
+.avatar-switch button.avatar-switch-on {
+  background: #1d2b47;
+  color: #dbe6f8;
+}
+
 /* ── 리서치 실행 입력창 ─────────────────────────────────── */
 .launcher {
   position: absolute;

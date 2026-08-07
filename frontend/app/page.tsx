@@ -10,6 +10,7 @@
 import { useCallback, useMemo } from 'react'
 import { AgentDetailPanel } from '@/components/panel/AgentDetailPanel'
 import { AgentListPanel } from '@/components/panel/AgentListPanel'
+import { AvatarSwitch } from '@/components/panel/AvatarSwitch'
 import { FpsMeter } from '@/components/panel/FpsMeter'
 import { RunLauncher } from '@/components/panel/RunLauncher'
 import { Scene } from '@/components/scene/Scene'
@@ -62,6 +63,8 @@ export default function Home() {
         <span className={connected ? 'hud-pill hud-live' : 'hud-pill hud-dead'}>
           {connected ? '● 연결됨' : '○ 연결 끊김'}
         </span>
+        {/* 에셋 방향을 정하는 동안만 둔다 */}
+        <AvatarSwitch />
         <span className="hud-spacer" />
         {connected && list.length === 0 && <span className="hud-pill">대기 중</span>}
         {SUMMARY_ORDER.filter((s) => counts[s]).map((s) => (
