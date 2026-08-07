@@ -15,7 +15,8 @@
     {
       "clip": "Working",
       "state": "running",
-      "match": ["typing", "working", "type"],
+      "_note": "typing/writing 은 책상에 앉는 동작이라 소품이 없으면 허공에 앉는다. 서 있는 것을 먼저 매칭한다.",
+      "match": ["texting", "talking", "pointing", "working", "typing", "writing"],
       "required": false
     },
     {
