@@ -127,8 +127,7 @@ def _compose_message(agent: SubAgent) -> str:
 def apply_transition(agent: SubAgent) -> SubAgent:
     """에이전트 하나를 다음 상태로 옮기고 파생 필드를 갱신한다.
 
-    Phase 1에서 영속성을 붙일 지점이 여기다 — 호출부는 그대로 두고
-    이 함수 끝에 await upsert_agent(agent)만 추가하면 된다.
+    저장과 브로드캐스트는 하지 않는다 — 그건 report()의 몫이다.
     """
     previous = agent.state
     agent.state = next_state(previous, agent.retry_count)
@@ -146,11 +145,27 @@ def apply_transition(agent: SubAgent) -> SubAgent:
     elif agent.state is AgentState.RUNNING:
         agent.progress = min(1.0, round(agent.progress + random.uniform(0.1, 0.3), 2))
 
-    # 서버는 목표 좌표만 지정하고, 실제 이동 보간은 프론트가 처리한다 (5.1절)
-    agent.position = STATE_ZONES[agent.state]
     agent.message = _compose_message(agent)
-    agent.updated_at = datetime.now(UTC)
     return agent
+
+
+async def report(agent: SubAgent) -> None:
+    """상태 변화를 한 번에 반영한다 — 메모리·DB·화면.
+
+    목업 루프도, Phase 6의 LangGraph 노드도 이 함수 하나만 부른다.
+    두 구현이 같은 통로를 쓰므로 나란히 돌려 보며 교체할 수 있고,
+    "노드는 작업만 하고 보고는 여기로" 라는 경계가 코드에 드러난다.
+
+    호출 전에 상태·메시지·진행률을 채워 두면 되고, 좌표와 시각은 여기서
+    맞춘다 — 상태와 존이 어긋나는 실수를 원천 차단하기 위해서다.
+    """
+    agent.position = STATE_ZONES[agent.state]
+    agent.updated_at = datetime.now(UTC)
+
+    AGENTS[agent.agent_id] = agent
+    # 스냅샷(agents)과 이력(agent_logs)에 같은 트랜잭션으로 기록한다
+    await db.upsert_agent(agent)
+    await hub.broadcast(AgentUpdateMessage(payload=agent).model_dump(mode="json"))
 
 
 async def load_agents() -> None:
@@ -177,9 +192,7 @@ async def mock_state_loop() -> None:
         if AGENTS:
             agent = random.choice(list(AGENTS.values()))
             apply_transition(agent)
-            # 스냅샷(agents)과 이력(agent_logs)에 같은 트랜잭션으로 기록한다
-            await db.upsert_agent(agent)
-            await hub.broadcast(AgentUpdateMessage(payload=agent).model_dump(mode="json"))
+            await report(agent)
         await asyncio.sleep(TICK_SECONDS)
 
 

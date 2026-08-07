@@ -53,6 +53,22 @@ class Settings(BaseSettings):
     retry_backoff_factor: float = 2.0
 
     # LLM (11.1절, Phase 6)
+    #
+    # 'fake' 는 실제 호출 없이 응답을 흉내 낸다. 비용이 들지 않고 API 키도
+    # 필요 없어서, 파이프라인 구조를 먼저 완성하고 나중에 어댑터만 갈아끼울
+    # 수 있다. 데모도 키 없이 돌아간다.
+    llm_provider: str = "fake"
+    llm_model: str = ""
+
+    # 가짜 LLM 의 지연과 실패율.
+    #
+    # 실패를 섞는 이유: 이 도구가 풀려는 문제가 "조용히 재시도만 반복하는
+    # 에이전트를 놓치지 않는다"인데, 실패가 없으면 retrying/error 존이 영영
+    # 비어 있어 정작 핵심 기능을 검증할 수 없다.
+    fake_llm_failure_rate: float = 0.25
+    fake_llm_min_delay: float = 0.8
+    fake_llm_max_delay: float = 3.0
+
     anthropic_api_key: str = ""
     openai_api_key: str = ""
 

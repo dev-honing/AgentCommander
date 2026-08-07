@@ -44,13 +44,24 @@ def test_retry_below_limit_never_errors():
         assert orchestrator.next_state(AgentState.RETRYING, 0) is not AgentState.ERROR
 
 
-def test_transition_syncs_position_with_state():
-    """상태가 바뀌면 목표 좌표도 함께 갱신되어야 한다 (명세 5.1절)."""
+def test_every_reachable_state_has_a_zone():
+    """전이가 만들어내는 모든 상태에 목표 좌표가 있어야 한다 (명세 5.1절).
+
+    좌표를 실제로 넣는 것은 report()다 — 저장 경로를 하나로 모아 상태와 존이
+    어긋날 수 없게 했다. 여기서는 그 앞단인 전이 규칙이 좌표 없는 상태를
+    만들지 않는지만 본다.
+    """
     orchestrator.reset_agents()
     agent = orchestrator.AGENTS["agent-001"]
-    for _ in range(30):
+    seen = set()
+    for _ in range(200):
         orchestrator.apply_transition(agent)
-        assert agent.position == STATE_ZONES[agent.state]
+        seen.add(agent.state)
+        assert agent.state in STATE_ZONES
+
+    # 200번이면 종료 상태를 뺀 나머지는 한 번씩 나온다
+    assert AgentState.RUNNING in seen
+    assert AgentState.IDLE in seen
 
 
 def test_retry_count_accumulates_then_resets():
