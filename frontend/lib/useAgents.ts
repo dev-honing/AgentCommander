@@ -12,6 +12,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { fetchWsTicket } from './api'
 import type { Agent, ClientMessage, ServerMessage } from './protocol'
 
 const SPEECH_TTL_MS = 4000
@@ -86,11 +87,27 @@ export function useAgents() {
       timersRef.current.push(timer, tick as unknown as ReturnType<typeof setTimeout>)
     }
 
-    const connect = () => {
+    const connect = async () => {
       clearTimers()
       setConnection((prev) => ({ ...prev, retryInSeconds: null }))
 
-      const ws = new WebSocket(url)
+      // 접속 티켓을 먼저 받는다. 백엔드가 꺼져 있으면 여기서 걸리는데,
+      // WebSocket 이 열리지 않은 것과 결과가 같으므로 같은 백오프를 태운다.
+      let ticket: string
+      try {
+        ticket = (await fetchWsTicket()).ticket
+      } catch {
+        if (!closedByUsRef.current) scheduleReconnect()
+        return
+      }
+
+      // 티켓을 받아 오는 사이에 화면이 내려갔을 수 있다.
+      // 그대로 열면 정리되지 않는 연결이 남는다.
+      if (closedByUsRef.current) return
+
+      // NEXT_PUBLIC_WS_URL 에 이미 쿼리가 붙어 있을 수 있다
+      const sep = url.includes('?') ? '&' : '?'
+      const ws = new WebSocket(`${url}${sep}ticket=${encodeURIComponent(ticket)}`)
       wsRef.current = ws
 
       ws.onopen = () => {

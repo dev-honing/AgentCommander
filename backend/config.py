@@ -27,9 +27,9 @@ class Settings(BaseSettings):
 
     # 인증 (9.3절)
     api_key: str = "change-me-local-dev-key"
+    # WebSocket 핸드셰이크의 Origin 검증에도 쓴다. CORS 는 WebSocket 에
+    # 적용되지 않아 별도로 봐야 한다 — auth.origin_allowed 참고.
     ws_allowed_origin: str = "http://localhost:3000"
-    # WebSocket 인증 토큰 — Phase 7b부터 필수. 빈 값이면 검증을 건너뛴다.
-    auth_token: str = ""
 
     # 저장소 (9.2 / 10.6절)
     upload_dir: str = "uploads"

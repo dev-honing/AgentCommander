@@ -104,7 +104,9 @@ cd frontend && npm install && npm run dev
 | 5 | 상태 패널 UI | 목록, progress bar, 로그 뷰어 | ✅ |
 | 6 | LangGraph 연동 | 목업 루프를 실제 오케스트레이션으로 교체 | 🟡 진행 중 |
 | 7a | 로컬 상시 가동 (임시) | Tunnel로 개발 중 외부 접근 확인 | ⬜ |
-| 7b | AWS 전환 | EC2/RDS 이전, WebSocket 인증 추가 | ⬜ |
+| 7b | AWS 전환 | EC2/RDS 이전 | ⬜ |
+
+WebSocket 인증은 7b 계획이었으나 7a(외부 공개) 이전에 앞당겨 적용했다. 그 사이 "설정은 막혔는데 실시간 상태는 누구나 보는" 구간이 생기기 때문이다 — 방식은 [명세 해석 노트](./docs/SPEC-NOTES.md)의 "WebSocket 인증 방식" 참고.
 
 ## 문서
 

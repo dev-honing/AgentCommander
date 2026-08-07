@@ -14,10 +14,11 @@ from fastapi.staticfiles import StaticFiles
 
 import db
 import orchestrator
+from auth import consume_ws_ticket, origin_allowed
 from config import get_settings
 from hub import hub
 from models import AgentSnapshotMessage, AgentSpeakMessage, AgentSpeakPayload
-from routers import agents, roles, runs
+from routers import agents, roles, runs, ws_auth
 from storage import ensure_upload_dir
 
 settings = get_settings()
@@ -73,6 +74,7 @@ app.mount("/models", StaticFiles(directory=settings.upload_dir), name="models")
 app.include_router(agents.router)
 app.include_router(roles.router)
 app.include_router(runs.router)
+app.include_router(ws_auth.router)
 
 
 @app.get("/health")
@@ -103,12 +105,22 @@ async def ws_endpoint(websocket: WebSocket) -> None:
     접속 시 1회 전체 스냅샷을 보내고, 이후에는 orchestrator가 변경분만
     브로드캐스트한다.
 
-    ⚠️ 이 엔드포인트에는 아직 인증이 없다. REST는 9.3절에 따라 지금부터
-       API Key로 잠그지만 WebSocket 인증은 Phase 7b 계획이라, 그 사이에는
-       "설정 변경은 막혀 있는데 실시간 상태는 누구나 보는" 비대칭이 생긴다.
-       로컬 전용 단계에서는 무해하나 Phase 7a(Tunnel로 임시 공개) 시점에는
-       실제 노출 경로가 되므로 그전에 AUTH_TOKEN 검증을 앞당길 것 — 9장 주의사항.
+    접속하려면 POST /api/ws-ticket 으로 받은 1회용 티켓이 필요하다.
+    브라우저 WebSocket API 가 헤더를 붙이지 못해 REST 와 방식이 갈린 것이며,
+    보호 수준은 같다 — 근거는 auth.py 참고.
+
+    거절은 accept 전에 한다. 받아들인 뒤 끊으면 클라이언트 입장에서
+    "붙었다가 끊긴 것"으로 보여 인증 실패와 네트워크 장애가 구분되지 않는다.
+    accept 전에 닫으면 핸드셰이크 자체가 실패하므로 원인이 분명해진다.
     """
+    if not origin_allowed(websocket.headers.get("origin")):
+        await websocket.close(code=1008, reason="Origin not allowed")
+        return
+
+    if not consume_ws_ticket(websocket.query_params.get("ticket")):
+        await websocket.close(code=1008, reason="Invalid or expired ticket")
+        return
+
     await hub.connect(websocket)
     try:
         snapshot = AgentSnapshotMessage(payload=list(orchestrator.AGENTS.values()))

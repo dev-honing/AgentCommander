@@ -37,6 +37,24 @@ export function fetchRoles(): Promise<Role[]> {
   return request<Role[]>('/roles')
 }
 
+export type WsTicket = {
+  ticket: string
+  expires_in: number
+}
+
+/**
+ * WebSocket 접속용 1회용 티켓을 받아 온다.
+ *
+ * 브라우저의 WebSocket API 는 핸드셰이크에 헤더를 붙일 수 없어 REST 처럼
+ * X-API-Key 를 실을 수 없다. 그렇다고 키를 쿼리스트링에 넣으면 브라우저로
+ * 새는 데다 로그에도 남는다. 그래서 키를 아는 프록시가 대신 티켓을 받아 온다.
+ *
+ * 티켓은 30초짜리 1회용이라 접속할 때마다 새로 받아야 한다 — 재연결도 마찬가지다.
+ */
+export function fetchWsTicket(): Promise<WsTicket> {
+  return request<WsTicket>('/ws-ticket', { method: 'POST' })
+}
+
 export type RunCreated = {
   run_id: string
   question: string
