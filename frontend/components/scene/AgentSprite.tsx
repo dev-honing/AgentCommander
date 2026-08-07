@@ -12,9 +12,9 @@
 
 import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
-import type { Group, Sprite as SpriteType } from 'three'
+import type { Group, Sprite as SpriteType, Texture } from 'three'
 import { MathUtils } from 'three'
-import { pixelCharacterFrames, SPRITE_H, SPRITE_W } from '@/lib/pixelCharacter'
+import { pixelCharacterFrames, SPRITE_H, SPRITE_W, STATE_POSE } from '@/lib/pixelCharacter'
 import type { Agent } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
 import { TILE_WORLD } from '@/lib/tileTexture'
@@ -58,8 +58,11 @@ export function AgentSprite({ agent, scatter, speech, selected, dense, onClick }
   const sprite = useRef<SpriteType>(null)
   const elapsed = useRef(0)
   const frame = useRef(0)
+  /** 지금 스프라이트에 물려 있는 자세의 프레임 묶음 */
+  const applied = useRef<Texture[] | null>(null)
 
-  const frames = useMemo(() => pixelCharacterFrames(agent.role), [agent.role])
+  const pose = STATE_POSE[agent.state]
+  const frames = useMemo(() => pixelCharacterFrames(agent.role, pose), [agent.role, pose])
 
   const color = STATE_COLOR[agent.state]
   const isRetrying = agent.state === 'retrying'
@@ -82,8 +85,11 @@ export function AgentSprite({ agent, scatter, speech, selected, dense, onClick }
       // 프레임 교체 — 상태가 바쁠수록 빠르게 움직인다
       const interval = FRAME_INTERVAL[agent.state] ?? 0.6
       const next = Math.floor(elapsed.current / interval) % frames.length
-      if (next !== frame.current) {
+      // 자세가 바뀌면 프레임 번호가 그대로여도 갈아 끼워야 한다.
+      // 번호만 보고 판단하면 다음 번호로 넘어갈 때까지 이전 자세가 남는다.
+      if (next !== frame.current || applied.current !== frames) {
         frame.current = next
+        applied.current = frames
         sprite.current.material.map = frames[next]
         sprite.current.material.needsUpdate = true
       }
