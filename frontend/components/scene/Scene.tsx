@@ -13,6 +13,7 @@ import { Grid, OrbitControls } from '@react-three/drei'
 import { MOUSE } from 'three'
 import { useMemo, useRef } from 'react'
 import type { Agent } from '@/lib/protocol'
+import { useAvatarMode } from '@/lib/avatarMode'
 import { useRoles } from '@/lib/useRoles'
 import { AgentAvatar } from './AgentAvatar'
 import { ZoneMarkers } from './ZoneMarkers'
@@ -53,6 +54,8 @@ type SceneProps = {
 export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: SceneProps) {
   // role_id → model_path. 등록된 모델이 없으면 해당 역할은 큐브로 그려진다.
   const roles = useRoles()
+  // 캐릭터 표현 방식 (?avatar=sprite|character|cube)
+  const mode = useAvatarMode()
   /** 마지막 pointerdown 위치 — 드래그와 클릭을 가르는 데 쓴다 */
   const pressAt = useRef<[number, number] | null>(null)
 
@@ -128,6 +131,7 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
         <AgentAvatar
           key={agent.agent_id}
           agent={agent}
+          mode={mode}
           modelPath={roles[agent.role]}
           scatter={scatters[agent.agent_id] ?? [0, 0]}
           speech={speech[agent.agent_id]}
