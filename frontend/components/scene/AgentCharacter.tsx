@@ -122,20 +122,47 @@ export function AgentCharacter({
     return top > 1e-4 ? clampScale(TARGET_HEIGHT / top) : 1
   }, [model])
 
-  const { actions } = useAnimations(animations as AnimationClip[], group)
+  // ⚠️ 믹서의 루트로 group ref 가 아니라 모델 객체를 직접 넘긴다.
+  //
+  //    drei 의 useAnimations 는 첫 렌더에 루트를 확정한다. 그런데 ref 는 첫
+  //    렌더 시점에 아직 null 이라, ref 를 넘기면 믹서가 "ref 객체 자체"를
+  //    루트로 잡는다. 그러면 클립의 트랙(mixamorigHips.quaternion 등)이 붙을
+  //    뼈를 못 찾는다 — 에러는 나지 않고 actions 도 정상으로 보이며 play()
+  //    까지 통과하는데, 화면만 T포즈에 머문다.
+  //
+  //    모델은 이미 만들어진 Object3D 라 첫 렌더부터 값이 있다.
+  const { actions } = useAnimations(animations as AnimationClip[], model)
   const clipNames = useMemo(() => animations.map((a) => a.name), [animations])
-  const current = useRef<string | undefined>(undefined)
 
-  // 상태 → 클립 전환 (crossfade)
+  // 상태가 아니라 **해석된 클립 이름**을 기준으로 삼는다.
+  // running 과 retrying 은 같은 클립을 쓰므로(5.1절), 상태로 걸면 존을 옮길
+  // 때마다 같은 동작이 처음부터 다시 시작해 툭 끊긴다.
+  const clipName = useMemo(
+    () => resolveClip(clipNames, STATE_CLIP[agent.state as AgentState] ?? 'Idle'),
+    [clipNames, agent.state],
+  )
+
+  // 클립 재생 (crossfade)
+  //
+  // ⚠️ "지금 재생 중인 클립"을 ref 로 들고 비교하면 안 된다.
+  //    React 는 개발 모드에서 effect 를 마운트→정리→마운트 로 두 번 돌린다.
+  //    그 사이 drei 의 useAnimations 정리 단계가 stopAllAction() 으로 모든
+  //    액션을 끄는데, ref 는 그 왕복을 넘어 살아남는다. 두 번째 실행에서
+  //    "이미 같은 클립"으로 판단해 그냥 돌아가 버리고, 결국 아무것도 재생되지
+  //    않은 채 T포즈로 굳는다 — 에러도 경고도 없다.
+  //
+  //    재생과 정지를 같은 effect 의 설정/정리로 짝지으면 몇 번을 돌든 상태가
+  //    맞는다. 교차 전환도 자연스럽게 따라온다 — 정리가 이전 클립을 빼고
+  //    설정이 다음 클립을 넣는다.
   useEffect(() => {
-    const desired = STATE_CLIP[agent.state as AgentState] ?? 'Idle'
-    const next = resolveClip(clipNames, desired)
-    if (!next || next === current.current) return
+    const action = clipName ? actions[clipName] : undefined
+    if (!action) return
 
-    if (current.current) actions[current.current]?.fadeOut(FADE_SECONDS)
-    actions[next]?.reset().fadeIn(FADE_SECONDS).play()
-    current.current = next
-  }, [agent.state, actions, clipNames])
+    action.reset().fadeIn(FADE_SECONDS).play()
+    return () => {
+      action.fadeOut(FADE_SECONDS)
+    }
+  }, [actions, clipName])
 
   useFrame((_, delta) => {
     if (!group.current) return
