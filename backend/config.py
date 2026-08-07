@@ -69,6 +69,10 @@ class Settings(BaseSettings):
     fake_llm_min_delay: float = 0.8
     fake_llm_max_delay: float = 3.0
 
+    # 리서치 파이프라인 (Phase 6). 질문 하나당 조사 담당 수.
+    # 여기에 검증·정리 담당 2명이 더해지므로 3이면 에이전트 5개가 뜬다.
+    research_agent_count: int = 3
+
     anthropic_api_key: str = ""
     openai_api_key: str = ""
 

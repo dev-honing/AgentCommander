@@ -85,7 +85,7 @@ cd frontend && npm install && npm run dev
 | 3 | 리깅 캐릭터 교체 | 역할별 캐릭터 + 상태별 애니메이션 전환 | ⬜ 에셋 필요 |
 | 4 | 클릭 상호작용 + 대화풍선 | 클릭 시 `agent_speak` 응답이 말풍선으로 표시 | ✅ |
 | 5 | 상태 패널 UI | 목록, progress bar, 로그 뷰어 | ✅ |
-| 6 | LangGraph 연동 | 목업 루프를 실제 오케스트레이션으로 교체 | ⬜ |
+| 6 | LangGraph 연동 | 목업 루프를 실제 오케스트레이션으로 교체 | 🟡 진행 중 |
 | 7a | 로컬 상시 가동 (임시) | Tunnel로 개발 중 외부 접근 확인 | ⬜ |
 | 7b | AWS 전환 | EC2/RDS 이전, WebSocket 인증 추가 | ⬜ |
 

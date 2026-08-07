@@ -148,7 +148,34 @@ client.chat.completions.create(model=..., messages=[...])            # OpenAI
 
 ---
 
-## 12. 버전 정책 — §11.5
+## 12. LangGraph 관련 — §11.2
+
+### `RetryPolicy` 임포트 경로가 바뀌었다
+
+명세는 `from langgraph.pregel import RetryPolicy`로 적었으나, 현재 버전(1.x)에서는 **`langgraph.types`** 로 옮겨졌다. 노드에 붙이는 인자 이름도 `retry`가 아니라 `retry_policy`다.
+
+```python
+from langgraph.types import RetryPolicy
+graph.add_node("call_llm", node, retry_policy=retry)
+```
+
+### 재시도 횟수를 그래프 상태에 담으면 안 된다
+
+명세는 "재시도가 발생할 때마다 retry_count를 포함한 agent_update를 브로드캐스트"하라고 했지만, 구현 방법은 적지 않았다. 직관적인 방법 — 그래프 상태(`TypedDict`)에 `attempt` 필드를 두고 증가시키는 것 — 은 **동작하지 않는다.**
+
+노드가 실패하면 예외를 던지는데, 그러면 반환값이 없어 상태가 갱신되지 않는다. `RetryPolicy`는 **같은 상태로** 노드를 다시 부르므로 카운터가 영원히 0에 머문다. 실제로 그렇게 만들었다가 `retrying`이 화면에 한 번도 뜨지 않았다.
+
+**채택**: 그래프 밖(모듈 수준 딕셔너리)에서 에이전트별 시도 횟수를 센다. 노드는 진입 시 그 값을 읽어 `running`/`retrying`을 가르고, 예외를 던지기 직전에 값을 올린다.
+
+### 목업과 실제 작업이 같은 에이전트를 두고 다툰다
+
+목업 루프는 무작위로 에이전트를 골라 상태를 바꾼다. 실행에서 갈라져 나온 에이전트까지 고르면, 실제 작업이 끝난 뒤에도 목업이 상태를 계속 흔들어 **화면이 거짓말을 한다.**
+
+**채택**: 두 가지로 거른다. `MANAGED`(지금 그래프가 돌고 있는 것)와 `parent_id`(실행에서 갈라져 나온 것). 전자만 걸렀더니 작업이 끝난 에이전트가 다시 목업에 잡혔다.
+
+---
+
+## 13. 버전 정책 — §11.5
 
 명세 §11.5는 "Python 3.12 / Node 20 LTS로 버전 고정"을 명시했다. Python 3.12는 그대로 유지하지만, 프론트엔드 쪽은 다음과 같이 조정했다.
 

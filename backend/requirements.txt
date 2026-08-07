@@ -19,8 +19,10 @@ pydantic-settings>=2.6
 # multipart는 glTF 모델 업로드(9.2절)에 필요
 python-multipart>=0.0.17
 
-# --- Phase 6 (오케스트레이션 / LLM 연동) 진입 시 주석 해제 ---
-# 지금 켜 두면 CI 설치 시간만 늘고 쓰이지 않는다.
-# langgraph>=0.2
+# 오케스트레이션 (Phase 6)
+langgraph>=1.0
+
+# --- 실제 LLM 연동 시 주석 해제 ---
+# 기본 provider 는 'fake' 라 실제 SDK 없이도 파이프라인이 돈다.
 # anthropic>=0.40
 # openai>=1.55

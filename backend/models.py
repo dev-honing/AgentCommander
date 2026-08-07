@@ -64,6 +64,13 @@ class SubAgent(BaseModel):
     position: Position = (0.0, 0.0, 0.0)
     updated_at: datetime | None = None
 
+    # --- Phase 6: 실제 작업 ---
+    task: str | None = None  # 이 에이전트가 받은 지시
+    result: str | None = None  # 산출물
+    # 어느 작업에서 갈라져 나왔는지. 나중에 3D 씬에서 에이전트 사이를
+    # 선으로 잇는 연출의 근거가 된다.
+    parent_id: str | None = None
+
 
 class Role(BaseModel):
     """역할 정의 (명세 9.1절).

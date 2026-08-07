@@ -55,6 +55,9 @@ def _row_to_agent(row: asyncpg.Record) -> SubAgent:
         message=row["message"],
         position=(row["pos_x"], row["pos_y"], row["pos_z"]),
         updated_at=row["updated_at"],
+        task=row["task"],
+        result=row["result"],
+        parent_id=row["parent_id"],
     )
 
 
@@ -75,8 +78,8 @@ async def upsert_agent(agent: SubAgent) -> None:
             """
             INSERT INTO agents
               (agent_id, name, role, state, retry_count, progress, message,
-               pos_x, pos_y, pos_z, updated_at)
-            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
+               pos_x, pos_y, pos_z, updated_at, task, result, parent_id)
+            VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
             ON CONFLICT (agent_id) DO UPDATE SET
               state       = EXCLUDED.state,
               retry_count = EXCLUDED.retry_count,
@@ -85,7 +88,10 @@ async def upsert_agent(agent: SubAgent) -> None:
               pos_x       = EXCLUDED.pos_x,
               pos_y       = EXCLUDED.pos_y,
               pos_z       = EXCLUDED.pos_z,
-              updated_at  = EXCLUDED.updated_at
+              updated_at  = EXCLUDED.updated_at,
+              task        = EXCLUDED.task,
+              result      = EXCLUDED.result,
+              parent_id   = EXCLUDED.parent_id
             """,
             agent.agent_id,
             agent.name,
@@ -98,6 +104,9 @@ async def upsert_agent(agent: SubAgent) -> None:
             y,
             z,
             now,
+            agent.task,
+            agent.result,
+            agent.parent_id,
         )
         await conn.execute(
             """

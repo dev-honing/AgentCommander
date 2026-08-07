@@ -76,6 +76,13 @@ class AgentTable(Base):
 
     updated_at: Mapped[DateTime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
+    # Phase 6: 에이전트가 실제 작업을 하려면 "무엇을" 할지가 필요하다.
+    task: Mapped[str | None] = mapped_column(Text, nullable=True)
+    result: Mapped[str | None] = mapped_column(Text, nullable=True)
+    # 어느 작업에서 갈라져 나왔는지. FK를 걸지 않는 이유는 부모가 먼저
+    # 삭제돼도 자식 이력이 남아야 복기가 되기 때문이다.
+    parent_id: Mapped[str | None] = mapped_column(String, nullable=True)
+
 
 class AgentLogTable(Base):
     """상태 변화 이력 — append-only, 복기용 (명세 3.2절).

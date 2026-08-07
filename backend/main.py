@@ -17,7 +17,7 @@ import orchestrator
 from config import get_settings
 from hub import hub
 from models import AgentSnapshotMessage, AgentSpeakMessage, AgentSpeakPayload
-from routers import agents, roles
+from routers import agents, roles, runs
 from storage import ensure_upload_dir
 
 settings = get_settings()
@@ -70,6 +70,7 @@ app.mount("/models", StaticFiles(directory=settings.upload_dir), name="models")
 
 app.include_router(agents.router)
 app.include_router(roles.router)
+app.include_router(runs.router)
 
 
 @app.get("/health")

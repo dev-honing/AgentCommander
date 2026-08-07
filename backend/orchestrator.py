@@ -33,6 +33,10 @@ _SEED = [
 
 AGENTS: dict[str, SubAgent] = {}
 
+# LangGraph 가 돌리고 있는 에이전트. 목업 루프가 이들을 건드리면 실제 작업
+# 상태를 무작위로 덮어써 버리므로 제외한다 (research.py 가 등록/해제한다).
+MANAGED: set[str] = set()
+
 # 역할별 작업 문구. 대화풍선(5.2절)과 상태 메시지에 쓴다.
 _ROLE_TASKS = {
     "researcher": ["웹 검색 중...", "문서 3건 수집", "출처 교차 확인 중"],
@@ -189,8 +193,14 @@ async def mock_state_loop() -> None:
     트래픽이 선형으로 커지지 않게 하려는 것이 4장의 설계 의도다.
     """
     while True:
-        if AGENTS:
-            agent = random.choice(list(AGENTS.values()))
+        # 실제 작업에 속한 에이전트는 건드리지 않는다.
+        #
+        # MANAGED 는 "지금 그래프가 돌고 있는 것", parent_id 는 "실행에서
+        # 갈라져 나온 것"이다. 후자를 함께 거르지 않으면 작업이 끝난 에이전트를
+        # 목업이 다시 흔들어, 끝난 일이 계속 진행 중인 것처럼 보인다.
+        free = [a for a in AGENTS.values() if a.agent_id not in MANAGED and a.parent_id is None]
+        if free:
+            agent = random.choice(free)
             apply_transition(agent)
             await report(agent)
         await asyncio.sleep(TICK_SECONDS)
