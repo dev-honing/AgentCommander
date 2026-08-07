@@ -63,7 +63,7 @@ export default function Home() {
         <span className={connected ? 'hud-pill hud-live' : 'hud-pill hud-dead'}>
           {connected ? '● 연결됨' : '○ 연결 끊김'}
         </span>
-        {/* 에셋 방향을 정하는 동안만 둔다 */}
+        {/* 방향은 도트로 정해졌고, 전환기는 비교·측정용으로 남긴다 */}
         <AvatarSwitch />
         <span className="hud-spacer" />
         {connected && list.length === 0 && <span className="hud-pill">대기 중</span>}
