@@ -72,7 +72,7 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       group
         .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
         .forEach((a, i) => {
-          map[a.agent_id] = zoneCell(i)
+          map[a.agent_id] = zoneCell(i, group.length)
           crowded[a.agent_id] = group.length > DENSE_THRESHOLD
         })
     })
