@@ -14,7 +14,13 @@ import { useFrame } from '@react-three/fiber'
 import { useMemo, useRef } from 'react'
 import type { Group, Sprite as SpriteType, Texture } from 'three'
 import { MathUtils } from 'three'
-import { pixelCharacterFrames, SPRITE_H, SPRITE_W, STATE_POSE } from '@/lib/pixelCharacter'
+import {
+  pixelCharacterFrames,
+  SPRITE_H,
+  SPRITE_W,
+  STATE_POSE,
+  variantFor,
+} from '@/lib/pixelCharacter'
 import type { Agent } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
 import { TILE_WORLD } from '@/lib/tileTexture'
@@ -62,7 +68,13 @@ export function AgentSprite({ agent, scatter, speech, selected, dense, onClick }
   const applied = useRef<Texture[] | null>(null)
 
   const pose = STATE_POSE[agent.state]
-  const frames = useMemo(() => pixelCharacterFrames(agent.role, pose), [agent.role, pose])
+  // 개체 변형은 agent_id 로 고정한다 — 목록 순번을 쓰면 누가 드나들 때마다
+  // 기존 캐릭터들의 머리색이 한꺼번에 바뀐다.
+  const variant = useMemo(() => variantFor(agent.agent_id), [agent.agent_id])
+  const frames = useMemo(
+    () => pixelCharacterFrames(agent.role, pose, variant),
+    [agent.role, pose, variant],
+  )
 
   const color = STATE_COLOR[agent.state]
   const isRetrying = agent.state === 'retrying'

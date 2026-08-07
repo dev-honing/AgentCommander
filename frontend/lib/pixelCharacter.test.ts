@@ -7,7 +7,7 @@
  */
 
 import { describe, expect, it } from 'vitest'
-import { STATE_POSE } from './pixelCharacter'
+import { STATE_POSE, VARIANTS, variantFor } from './pixelCharacter'
 import { STATE_COLOR, STATE_ZONES } from './protocol'
 import type { AgentState } from './protocol'
 
@@ -32,5 +32,29 @@ describe('STATE_POSE', () => {
 
   it('error 와 done 은 서로 다른 자세다', () => {
     expect(STATE_POSE.error).not.toBe(STATE_POSE.done)
+  })
+})
+
+describe('variantFor', () => {
+  it('같은 id 는 언제나 같은 모습이다', () => {
+    // 갱신이 잦은 화면이라, 물어볼 때마다 달라지면 머리색이 깜빡인다
+    expect(variantFor('agent-007')).toBe(variantFor('agent-007'))
+  })
+
+  it('범위를 벗어나지 않는다', () => {
+    for (let i = 0; i < 200; i += 1) {
+      const v = variantFor(`run-20260807-${i}-researcher`)
+      expect(v).toBeGreaterThanOrEqual(0)
+      expect(v).toBeLessThan(VARIANTS)
+    }
+  })
+
+  it('여럿이 모이면 실제로 갈린다', () => {
+    // 변형을 넣은 목적이 "한 덩어리로 보이지 않게"인데, 해시가 한쪽으로
+    // 쏠리면 넣으나 마나다. 스무 명이면 최소 세 가지는 나와야 한다.
+    const seen = new Set(
+      Array.from({ length: 20 }, (_, i) => variantFor(`agent-${String(i + 1).padStart(3, '0')}`)),
+    )
+    expect(seen.size).toBeGreaterThanOrEqual(3)
   })
 })
