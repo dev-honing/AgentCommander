@@ -27,6 +27,7 @@ import { modelUrl } from '@/lib/models'
 import type { Agent, AgentState } from '@/lib/protocol'
 import { STATE_CLIP, STATE_COLOR } from '@/lib/protocol'
 import { DialogueBubble } from './DialogueBubble'
+import { Z_NAMETAG } from './overlayDepth'
 
 const LERP_SPEED = 2.4
 /** 캐릭터 목표 높이(월드 단위). 큐브 한 변 0.9와 어울리는 크기 */
@@ -184,6 +185,7 @@ export function AgentCharacter({
           center
           distanceFactor={11}
           pointerEvents="none"
+          zIndexRange={Z_NAMETAG}
         >
           <div className={selected ? 'nametag nametag-sel' : 'nametag'}>
             {agent.name}

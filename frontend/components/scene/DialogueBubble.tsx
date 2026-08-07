@@ -12,6 +12,7 @@
  */
 
 import { Html } from '@react-three/drei'
+import { Z_BUBBLE } from './overlayDepth'
 
 type Props = {
   text: string
@@ -28,7 +29,7 @@ export function DialogueBubble({ text, position = [0, 1.5, 0], accent }: Props) 
       center
       distanceFactor={10}
       pointerEvents="none"
-      zIndexRange={[100, 0]}
+      zIndexRange={Z_BUBBLE}
     >
       <div className="bubble" style={accent ? { color: accent } : undefined}>
         {text}

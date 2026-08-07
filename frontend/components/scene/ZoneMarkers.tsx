@@ -14,6 +14,7 @@
 
 import { Html } from '@react-three/drei'
 import { MARKED_ZONES, STATE_COLOR, STATE_ZONES } from '@/lib/protocol'
+import { Z_ZONE_LABEL } from './overlayDepth'
 
 /**
  * 존 링 반지름.
@@ -42,7 +43,13 @@ export function ZoneMarkers() {
               <circleGeometry args={[ZONE_RADIUS - 0.04, 64]} />
               <meshBasicMaterial color={color} transparent opacity={0.07} />
             </mesh>
-            <Html position={[0, 0.02, ZONE_RADIUS + 0.5]} center distanceFactor={13} pointerEvents="none">
+            <Html
+              position={[0, 0.02, ZONE_RADIUS + 0.5]}
+              center
+              distanceFactor={13}
+              pointerEvents="none"
+              zIndexRange={Z_ZONE_LABEL}
+            >
               <div className="zonelabel" style={{ color }}>
                 {state}
               </div>
