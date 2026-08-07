@@ -25,6 +25,16 @@ body {
   position: relative;
   height: 100vh;
   width: 100vw;
+
+  /* 상세 패널 폭. 패널과 오버레이가 같은 값을 보게 한 곳에 둔다. */
+  --panel-w: min(440px, 40vw);
+  /* 오버레이가 우측에서 비켜야 하는 폭. 패널이 닫혀 있으면 0. */
+  --panel-inset: 0px;
+}
+/* 패널이 열리면 HUD·입력창·측정기가 그만큼 왼쪽으로 물러난다.
+   이걸 하지 않으면 우측 상태 배지가 패널에 가려 잘린다. */
+.stage.has-detail {
+  --panel-inset: var(--panel-w);
 }
 
 .stage canvas {
@@ -41,8 +51,11 @@ body {
   align-items: center;
   gap: 10px;
   padding: 14px 18px;
+  /* 상세 패널이 열리면 그 폭만큼 비켜난다 */
+  padding-right: calc(18px + var(--panel-inset));
   pointer-events: none;
   z-index: 10;
+  transition: padding-right 180ms ease-out;
 }
 .hud-top {
   top: 0;
@@ -102,9 +115,11 @@ body {
 /* ── 리서치 실행 입력창 ─────────────────────────────────── */
 .launcher {
   position: absolute;
-  left: 50%;
+  /* 패널이 열리면 남은 영역의 가운데로 옮긴다 */
+  left: calc(50% - var(--panel-inset) / 2);
   bottom: 24px;
   transform: translateX(-50%);
+  transition: left 180ms ease-out;
   z-index: 25;
   width: min(640px, calc(100vw - 32px));
   display: flex;
@@ -205,9 +220,11 @@ body {
 /* ── 프레임 측정기 (?fps=1) ─────────────────────────────── */
 .fps {
   position: absolute;
-  right: 16px;
+  /* 패널이 열리면 그 왼쪽에 붙는다 */
+  right: calc(16px + var(--panel-inset));
   bottom: 24px;
   z-index: 26;
+  transition: right 180ms ease-out;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
@@ -232,10 +249,11 @@ body {
 /* ── 연결 끊김 토스트 ───────────────────────────────────── */
 .toast {
   position: absolute;
-  left: 50%;
+  left: calc(50% - var(--panel-inset) / 2);
   /* 실행 입력창(.launcher) 위에 뜨도록 띄운다 */
   bottom: 116px;
   transform: translateX(-50%);
+  transition: left 180ms ease-out;
   z-index: 30;
   display: flex;
   align-items: center;
@@ -307,7 +325,9 @@ body {
 .panel-list {
   left: 16px;
   top: 62px;
-  width: min(420px, 38vw);
+  /* "Researcher-7" 같은 이름과 "출처 교차 확인 중" 같은 메시지가 잘리지 않을
+     최소 폭. 좁게 두면 둘 다 말줄임표가 되어 목록의 쓸모가 없어진다. */
+  width: min(520px, 42vw);
   max-height: calc(100vh - 100px);
 }
 .panel-detail {
@@ -317,8 +337,10 @@ body {
   /* 로그 한 줄 = 여백(28) + 시각(142) + 간격(10) + 상태(72) + 간격(10) + 메시지.
      메시지에 약 165px를 주면 440px이다.
      ⚠️ Phase 6에서 LLM 응답이 메시지로 들어오면 지금보다 훨씬 길어진다.
-        그때는 이 폭을 다시 넓히거나 메시지를 두 줄로 흘려야 한다. */
-  width: min(440px, 40vw);
+        그때는 이 폭을 다시 넓히거나 메시지를 두 줄로 흘려야 한다.
+     폭은 .stage 의 --panel-w 로 관리한다 — 오버레이가 같은 값을 봐야
+     정확히 그만큼 비켜난다. */
+  width: var(--panel-w);
   border-radius: 0;
   border-right: 0;
   border-top: 0;
@@ -413,7 +435,8 @@ body {
 }
 .row {
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) 68px minmax(0, 1.4fr) 64px 38px;
+  /* 이름은 최소 96px 을 보장한다 — 1fr 로만 두면 메시지에 밀려 잘린다 */
+  grid-template-columns: 10px minmax(96px, 1.1fr) 72px minmax(0, 1.6fr) 64px 40px;
   align-items: center;
   gap: 9px;
   padding: 9px 14px;
@@ -649,6 +672,10 @@ body {
   }
   .panel-detail {
     width: 100vw;
+  }
+  /* 패널이 화면을 덮으므로 오버레이가 비켜날 자리가 없다 */
+  .stage.has-detail {
+    --panel-inset: 0px;
   }
 }
 

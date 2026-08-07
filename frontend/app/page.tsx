@@ -45,7 +45,8 @@ export default function Home() {
   }, [list])
 
   return (
-    <main className="stage">
+    // 패널이 열렸음을 CSS 에 알린다 — HUD·입력창·측정기가 그만큼 비켜난다
+    <main className={selected ? 'stage has-detail' : 'stage'}>
       <Scene
         agents={list}
         speech={speech}
