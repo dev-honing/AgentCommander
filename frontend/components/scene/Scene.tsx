@@ -15,23 +15,12 @@ import { useMemo, useRef } from 'react'
 import type { Agent } from '@/lib/protocol'
 import { useAvatarMode } from '@/lib/avatarMode'
 import { useRoles } from '@/lib/useRoles'
-import { TILE_WORLD } from '@/lib/tileTexture'
+import { zoneCell } from '@/lib/zoneLayout'
 import { AgentAvatar } from './AgentAvatar'
 import { CameraRig, HOME_POSITION, HOME_TARGET } from './CameraRig'
 import { TileFloor } from './TileFloor'
 import { ZoneMarkers } from './ZoneMarkers'
 
-/**
- * 같은 존에 모인 에이전트들이 겹치지 않도록 자리를 나눈다.
- *
- * 원래는 황금각 나선으로 흩뿌렸다. 겹침은 막았지만 자리가 제각각이라
- * 타일 바닥 위에서는 캐릭터가 격자를 무시하고 떠도는 것처럼 보였다.
- * 타일 칸에 맞춰 세우면 배치가 의도된 것으로 읽힌다.
- *
- * 한 칸 간격이 곧 캐릭터 폭이라, 옆자리와 어깨가 닿되 겹치지는 않는다.
- * 중심에서 가까운 칸부터 채우므로 인원이 적을 때는 존 한가운데 모인다.
- */
-const CELL = TILE_WORLD
 /** 이 픽셀 이내로 움직였으면 드래그가 아니라 클릭으로 본다 */
 const CLICK_SLOP = 5
 /**
@@ -41,36 +30,6 @@ const CLICK_SLOP = 5
  * 읽히지만 그 위로는 글자가 서로 파고들어 아무것도 읽히지 않는다.
  */
 const DENSE_THRESHOLD = 5
-/** 중심에서 가까운 순으로 정렬한 격자 칸. 필요한 만큼만 만들어 재사용한다 */
-let cells: [number, number][] = []
-
-function ensureCells(count: number) {
-  if (cells.length >= count) return
-  // 정사각 격자를 넉넉히 만든 뒤 중심 거리로 정렬한다.
-  const side = Math.ceil(Math.sqrt(count)) + 2
-  const half = (side - 1) / 2
-  const made: [number, number][] = []
-  for (let i = 0; i < side; i += 1) {
-    for (let j = 0; j < side; j += 1) {
-      made.push([(i - half) * CELL, (j - half) * CELL])
-    }
-  }
-  // 거리가 같은 칸끼리는 각도로 순서를 고정한다. 안 그러면 정렬이 불안정해
-  // 목록이 갱신될 때마다 캐릭터들이 자리를 맞바꾼다.
-  made.sort((a, b) => {
-    const da = a[0] * a[0] + a[1] * a[1]
-    const db = b[0] * b[0] + b[1] * b[1]
-    if (Math.abs(da - db) > 1e-6) return da - db
-    return Math.atan2(a[1], a[0]) - Math.atan2(b[1], b[0])
-  })
-  cells = made
-}
-
-function scatterFor(index: number): [number, number] {
-  ensureCells(index + 1)
-  return cells[index]
-}
-
 type SceneProps = {
   agents: Agent[]
   /** agent_id → 지금 말하고 있는 내용 */
@@ -113,7 +72,7 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       group
         .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
         .forEach((a, i) => {
-          map[a.agent_id] = scatterFor(i)
+          map[a.agent_id] = zoneCell(i)
           crowded[a.agent_id] = group.length > DENSE_THRESHOLD
         })
     })

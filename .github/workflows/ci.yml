@@ -66,5 +66,7 @@ jobs:
       - run: npm ci
       # Next 16에서 `next lint`가 제거되어 ESLint CLI를 직접 호출한다
       - run: npm run lint
+      # 배치·상태 매핑처럼 화면을 봐야만 드러나는 규칙들을 잠근다
+      - run: npm run test
       # next build에 tsc 타입체크가 포함된다
       - run: npm run build

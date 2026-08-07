@@ -18,19 +18,10 @@
 
 import { Html } from '@react-three/drei'
 import { MARKED_ZONES, STATE_COLOR, STATE_ZONES } from '@/lib/protocol'
-import { TILE_WORLD } from '@/lib/tileTexture'
+import { ZONE_PAD } from '@/lib/zoneLayout'
 import { Z_ZONE_LABEL } from './overlayDepth'
 
-/**
- * 존 한 변의 길이 — 타일 6칸.
- *
- * 가장 가까운 두 존은 running(12,0,0)과 waiting(12,0,9)으로 간격이 9다.
- * 한 변이 9를 넘으면 두 구역이 맞붙어 경계가 사라지므로 7.5로 잡는다
- * (사이 간격 1.5 = 타일 한 칸 남짓). 존 좌표를 바꾸면 이 값도 함께 검토할 것.
- *
- * 20개가 한 존에 모여도 흩뿌리기 반경이 약 3.5라 구역 안에 들어온다.
- */
-const PAD = TILE_WORLD * 6
+const PAD = ZONE_PAD
 /** 테두리 두께 */
 const EDGE = 0.16
 
