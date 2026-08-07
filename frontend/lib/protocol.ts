@@ -29,6 +29,13 @@ export type Agent = {
   /** 서버가 지정한 목표 좌표. 실제 이동은 프론트가 lerp로 보간한다 (5.1절). */
   position: Position
   updated_at: string | null
+
+  /** 이 에이전트가 받은 지시 (Phase 6) */
+  task: string | null
+  /** 산출물 */
+  result: string | null
+  /** 어느 실행에서 갈라져 나왔는지. 목업 에이전트는 null */
+  parent_id: string | null
 }
 
 export type Role = {

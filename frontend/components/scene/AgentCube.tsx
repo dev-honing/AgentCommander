@@ -11,7 +11,7 @@
  * 매 프레임 좌표를 보내지 않는다 (5.1절).
  */
 
-import { Html } from '@react-three/drei'
+
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
 import type { Group, Mesh, MeshBasicMaterial, MeshStandardMaterial } from 'three'
@@ -19,7 +19,7 @@ import { Color, MathUtils } from 'three'
 import type { Agent } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
 import { DialogueBubble } from './DialogueBubble'
-import { Z_NAMETAG } from './overlayDepth'
+import { Nametag } from './Nametag'
 
 /** 목표 지점에 도달하는 속도. 값이 클수록 빠르게 붙는다. */
 const LERP_SPEED = 2.4
@@ -125,18 +125,7 @@ export function AgentCube({ agent, scatter, speech, selected, onClick }: Props) 
       {speech ? (
         <DialogueBubble text={speech} accent={isRetrying || isError ? color : undefined} />
       ) : (
-        <Html
-          position={[0, 0.95, 0]}
-          center
-          distanceFactor={11}
-          pointerEvents="none"
-          zIndexRange={Z_NAMETAG}
-        >
-          <div className={selected ? 'nametag nametag-sel' : 'nametag'}>
-            {agent.name}
-            {isRetrying && ` · ${agent.retry_count}회차`}
-          </div>
-        </Html>
+        <Nametag agent={agent} y={0.95} selected={selected} />
       )}
     </group>
   )

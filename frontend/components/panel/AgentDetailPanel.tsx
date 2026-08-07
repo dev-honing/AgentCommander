@@ -14,6 +14,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { fetchAgentLogs } from '@/lib/api'
 import type { Agent, AgentLog } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
+import { runColor } from '@/lib/runColor'
 
 const PAGE_SIZE = 30
 
@@ -134,6 +135,28 @@ export function AgentDetailPanel({ agent, onClose }: { agent: Agent; onClose: ()
             <dd>{agent.message ?? '—'}</dd>
           </div>
         </dl>
+
+        {/* 실행에 속한 에이전트만 지시와 산출물을 갖는다 (Phase 6) */}
+        {agent.parent_id && (
+          <div className="detail-run">
+            <div className="detail-run-head">
+              <span className="run-swatch" style={{ background: runColor(agent.parent_id) }} />
+              {agent.parent_id}
+            </div>
+            {agent.task && (
+              <p className="detail-block">
+                <span className="detail-block-label">지시</span>
+                {agent.task}
+              </p>
+            )}
+            {agent.result && (
+              <p className="detail-block">
+                <span className="detail-block-label">결과</span>
+                {agent.result}
+              </p>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="detail-sec">

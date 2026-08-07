@@ -16,7 +16,7 @@
  *     바운딩 박스를 재서 목표 높이에 맞춘다.
  */
 
-import { Html, useAnimations, useGLTF } from '@react-three/drei'
+import { useAnimations, useGLTF } from '@react-three/drei'
 import { useFrame } from '@react-three/fiber'
 import { useEffect, useMemo, useRef } from 'react'
 import type { AnimationClip, Bone, Group, Object3D } from 'three'
@@ -27,7 +27,7 @@ import { modelUrl } from '@/lib/models'
 import type { Agent, AgentState } from '@/lib/protocol'
 import { STATE_CLIP, STATE_COLOR } from '@/lib/protocol'
 import { DialogueBubble } from './DialogueBubble'
-import { Z_NAMETAG } from './overlayDepth'
+import { Nametag } from './Nametag'
 
 const LERP_SPEED = 2.4
 /** 캐릭터 목표 높이(월드 단위). 큐브 한 변 0.9와 어울리는 크기 */
@@ -180,18 +180,7 @@ export function AgentCharacter({
           accent={isRetrying || isError ? color : undefined}
         />
       ) : (
-        <Html
-          position={[0, TARGET_HEIGHT + 0.35, 0]}
-          center
-          distanceFactor={11}
-          pointerEvents="none"
-          zIndexRange={Z_NAMETAG}
-        >
-          <div className={selected ? 'nametag nametag-sel' : 'nametag'}>
-            {agent.name}
-            {isRetrying && ` · ${agent.retry_count}회차`}
-          </div>
-        </Html>
+        <Nametag agent={agent} y={TARGET_HEIGHT + 0.35} selected={selected} />
       )}
     </group>
   )

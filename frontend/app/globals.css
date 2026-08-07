@@ -349,6 +349,41 @@ body {
   display: flex;
   flex-direction: column;
 }
+
+/* 실행(run) 단위 묶음. 질문 여러 개를 동시에 던지면 에이전트가 20개까지
+   늘어나는데, 평평한 목록으로는 어느 질문 소속인지 알 수 없다. */
+.run-group {
+  display: flex;
+  flex-direction: column;
+}
+.run-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 14px 5px;
+  font-family: ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  font-size: 11px;
+  color: #5b6884;
+  background: rgba(8, 11, 20, 0.35);
+  border-top: 1px solid rgba(38, 49, 74, 0.55);
+}
+.run-group:first-child .run-head {
+  border-top: 0;
+}
+.run-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--r);
+  flex: none;
+}
+.run-name {
+  letter-spacing: 0.04em;
+}
+.run-count {
+  margin-left: auto;
+  font-variant-numeric: tabular-nums;
+}
 .row {
   display: grid;
   grid-template-columns: 10px minmax(0, 1fr) 68px minmax(0, 1.4fr) 64px 38px;
@@ -471,6 +506,39 @@ body {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+/* 실행에 속한 에이전트의 지시·산출물 (Phase 6) */
+.detail-run {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(38, 49, 74, 0.6);
+}
+.detail-run-head {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 11px;
+  color: #5b6884;
+}
+.detail-block {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #b7c2d6;
+  word-break: break-word;
+}
+.detail-block-label {
+  display: block;
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #5b6884;
+  margin-bottom: 2px;
+}
+
 .detail-sec {
   flex: none;
   display: flex;
@@ -578,6 +646,15 @@ body {
 .nametag-sel {
   border-color: #64748b;
   background: rgba(8, 11, 20, 0.92);
+}
+/* 실행(run) 색 점 — "어느 질문에서 나온 에이전트인가"를 상태 색과 별개로 표시 */
+.nametag-run {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  margin-right: 5px;
+  vertical-align: middle;
 }
 .zonelabel {
   font-size: 11px;
