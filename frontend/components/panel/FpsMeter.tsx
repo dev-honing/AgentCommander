@@ -34,6 +34,21 @@ type Stats = {
 
 const EMPTY: Stats = { fps: 0, worst: null, janky: 0, seconds: 0 }
 
+/**
+ * 큰 숫자의 색.
+ *
+ * 기준은 60fps 화면 — 여유 / 눈에 띄기 시작 / 끊겨 보임.
+ *
+ * ⚠️ 색은 반드시 **지금 화면에 뜬 그 숫자**를 따라야 한다. 전에는 큰 숫자를
+ *    최저값 기준으로 칠했는데, "98 fps"가 빨갛게 보이니 무엇이 문제라는
+ *    건지 읽을 방법이 없었다. 최저값은 보조 줄에 숫자로만 둔다.
+ */
+function toneFor(fps: number): string {
+  if (fps >= 50) return '#22c55e'
+  if (fps >= 30) return '#eab308'
+  return '#ef4444'
+}
+
 export function FpsMeter({ agentCount }: { agentCount: number }) {
   const enabled = useSyncExternalStore(noSubscribe, hasFpsParam, offOnServer)
   const [stats, setStats] = useState<Stats>(EMPTY)
@@ -112,12 +127,9 @@ export function FpsMeter({ agentCount }: { agentCount: number }) {
 
   if (!enabled) return null
 
-  const shown = stats.worst ?? stats.fps
-  const tone = shown >= 50 ? '#22c55e' : shown >= 30 ? '#eab308' : '#ef4444'
-
   return (
     <div className="fps">
-      <span className="fps-value" style={{ color: tone }}>
+      <span className="fps-value" style={{ color: toneFor(stats.fps) }}>
         {stats.fps} fps
       </span>
       <span className="fps-sub">

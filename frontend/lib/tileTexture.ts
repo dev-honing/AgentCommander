@@ -8,7 +8,13 @@
  * NearestFilter 를 쓰고, 텍스처는 한 번만 만들어 재사용한다.
  */
 
-import { CanvasTexture, NearestFilter, RepeatWrapping, type Texture } from 'three'
+import {
+  CanvasTexture,
+  NearestFilter,
+  NearestMipmapLinearFilter,
+  RepeatWrapping,
+  type Texture,
+} from 'three'
 
 /** 타일 한 칸의 픽셀 수 */
 const TILE_PX = 32
@@ -87,9 +93,20 @@ export function floorTexture(repeat: number): Texture {
       drawTile(ctx, FLOOR)
     }
     cached = new CanvasTexture(canvas)
+    // 가까이서는 픽셀 경계가 살아 있어야 한다 — 도트의 핵심이다
     cached.magFilter = NearestFilter
-    cached.minFilter = NearestFilter
-    cached.generateMipmaps = false
+    // ⚠️ 축소는 반대로 밉맵을 써야 한다.
+    //
+    //    밉맵 없이 NearestFilter 로 축소하면, 멀어질수록 한 화소가 텍스처의
+    //    여기저기를 찍게 된다. 카메라를 눕혀 지평선을 보면 화면 대부분이 그
+    //    상태가 되어 바닥이 지글거리고 프레임이 무너진다.
+    //
+    //    NearestMipmapLinear 는 밉 단계 사이만 섞으므로 가까운 화면의 또렷함은
+    //    그대로다. anisotropy 는 비스듬히 보이는 면의 선명도를 살린다 —
+    //    지원 한도를 넘으면 드라이버가 알아서 낮춘다.
+    cached.minFilter = NearestMipmapLinearFilter
+    cached.generateMipmaps = true
+    cached.anisotropy = 4
     cached.wrapS = RepeatWrapping
     cached.wrapT = RepeatWrapping
   }
