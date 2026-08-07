@@ -99,11 +99,115 @@ body {
   color: #8492ad;
 }
 
+/* ── 리서치 실행 입력창 ─────────────────────────────────── */
+.launcher {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 25;
+  width: min(640px, calc(100vw - 32px));
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+
+.launcher-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(20, 27, 43, 0.94);
+  border: 1px solid #26314a;
+  border-radius: 6px;
+  backdrop-filter: blur(8px);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.45);
+}
+.launcher-row:focus-within {
+  border-color: #3b82f6;
+}
+
+.launcher-caret {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 16px;
+  color: #3b82f6;
+  line-height: 1;
+}
+
+.launcher-input {
+  flex: 1;
+  min-width: 0;
+  background: none;
+  border: 0;
+  outline: none;
+  color: #dfe6f2;
+  font: inherit;
+  font-size: 14px;
+}
+.launcher-input::placeholder {
+  color: #5b6884;
+}
+.launcher-input:disabled {
+  opacity: 0.6;
+}
+
+.launcher-go {
+  flex: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  border: 1px solid #3b82f6;
+  background: #3b82f6;
+  color: #04101f;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+.launcher-go:disabled {
+  background: #1b2436;
+  border-color: #26314a;
+  color: #5b6884;
+  cursor: default;
+}
+
+.launcher-examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+}
+.launcher-chip {
+  padding: 4px 10px;
+  border-radius: 99px;
+  border: 1px solid #26314a;
+  background: rgba(20, 27, 43, 0.8);
+  color: #8492ad;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+.launcher-chip:hover {
+  color: #dfe6f2;
+  border-color: #475569;
+}
+
+.launcher-note {
+  font-family: ui-monospace, Consolas, monospace;
+  font-size: 12px;
+  color: #8492ad;
+}
+.launcher-error {
+  color: #fca5a5;
+}
+
 /* ── 연결 끊김 토스트 ───────────────────────────────────── */
 .toast {
   position: absolute;
   left: 50%;
-  bottom: 28px;
+  /* 실행 입력창(.launcher) 위에 뜨도록 띄운다 */
+  bottom: 116px;
   transform: translateX(-50%);
   z-index: 30;
   display: flex;

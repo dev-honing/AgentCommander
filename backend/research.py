@@ -28,7 +28,6 @@ from typing import TypedDict
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import RetryPolicy
 
-import db
 import orchestrator
 from config import get_settings
 from llm.adapter import LLMError, get_llm_client
@@ -173,6 +172,14 @@ async def run_agent(agent: SubAgent, task: str, wait_for: list[asyncio.Task] | N
     finally:
         _ATTEMPTS.pop(agent.agent_id, None)
         orchestrator.MANAGED.discard(agent.agent_id)
+        # 마지막 상태를 잠시 보여준 뒤 씬에서 내린다. 일회용 작업자라
+        # 남겨 두면 done 존에 무한정 쌓인다 (설정: RUN_AGENT_LINGER_SECONDS).
+        asyncio.create_task(_retire_later(agent.agent_id))  # noqa: RUF006
+
+
+async def _retire_later(agent_id: str) -> None:
+    await asyncio.sleep(get_settings().run_agent_linger_seconds)
+    await orchestrator.retire(agent_id)
 
 
 async def _make_agent(agent_id: str, name: str, role: str, parent_id: str | None) -> SubAgent:
@@ -186,8 +193,9 @@ async def _make_agent(agent_id: str, name: str, role: str, parent_id: str | None
         parent_id=parent_id,
         updated_at=datetime.now(UTC),
     )
-    orchestrator.AGENTS[agent_id] = agent
-    await db.upsert_agent(agent)
+    # report()로 넣어야 생성 즉시 화면에 나타난다. db.upsert_agent만 부르면
+    # 첫 상태 변화가 일어날 때까지 3D 씬에 아무것도 안 뜬다.
+    await orchestrator.report(agent)
     return agent
 
 

@@ -36,3 +36,23 @@ export function fetchAgentLogs(agentId: string, limit = 50, offset = 0): Promise
 export function fetchRoles(): Promise<Role[]> {
   return request<Role[]>('/roles')
 }
+
+export type RunCreated = {
+  run_id: string
+  question: string
+  agents: string[]
+}
+
+/**
+ * 리서치 실행을 시작한다.
+ *
+ * 202로 접수만 되고 작업은 계속 돈다. 진행 상황은 WebSocket으로 흘러오므로
+ * 이 응답을 기다렸다가 화면을 갱신할 필요가 없다.
+ */
+export function createRun(question: string, researchers?: number): Promise<RunCreated> {
+  return request<RunCreated>('/runs', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json' },
+    body: JSON.stringify({ question, researchers }),
+  })
+}

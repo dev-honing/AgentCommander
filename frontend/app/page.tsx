@@ -10,6 +10,7 @@
 import { useCallback, useMemo } from 'react'
 import { AgentDetailPanel } from '@/components/panel/AgentDetailPanel'
 import { AgentListPanel } from '@/components/panel/AgentListPanel'
+import { RunLauncher } from '@/components/panel/RunLauncher'
 import { Scene } from '@/components/scene/Scene'
 import { STATE_COLOR } from '@/lib/protocol'
 import type { AgentState } from '@/lib/protocol'
@@ -69,6 +70,8 @@ export default function Home() {
       </header>
 
       <AgentListPanel agents={list} selectedId={selectedId} onSelect={handleSelect} />
+
+      <RunLauncher />
 
       {/* key를 주면 다른 에이전트를 고를 때 패널이 새로 마운트되어
           이전 에이전트의 이력이 남지 않는다 */}

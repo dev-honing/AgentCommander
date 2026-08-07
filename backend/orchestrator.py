@@ -19,7 +19,14 @@ from datetime import UTC, datetime
 import db
 from config import get_settings
 from hub import hub
-from models import STATE_ZONES, AgentState, AgentUpdateMessage, SubAgent
+from models import (
+    STATE_ZONES,
+    AgentRefPayload,
+    AgentRemovedMessage,
+    AgentState,
+    AgentUpdateMessage,
+    SubAgent,
+)
 
 TICK_SECONDS = 2.0
 
@@ -177,13 +184,26 @@ async def load_agents() -> None:
 
     비어 있으면 목업 시드를 넣는다. 이미 있으면 그대로 이어받는다 —
     서버를 재시작해도 이전 상태에서 계속되어야 복기가 성립한다.
+
+    ⚠️ 실행에서 갈라져 나온 에이전트(parent_id 있음)는 올리지 않는다.
+       일회용 작업자라 재시작 시점에 이미 그래프가 죽어 있고, 씬에 올리면
+       끝난 일이 계속 서 있는 것처럼 보인다. DB 기록은 그대로 남아 복기된다.
     """
     seeded = build_seed_agents()
     await db.seed_mock_agents(seeded)
 
     AGENTS.clear()
     for agent in await db.fetch_agents():
-        AGENTS[agent.agent_id] = agent
+        if agent.parent_id is None:
+            AGENTS[agent.agent_id] = agent
+
+
+async def retire(agent_id: str) -> None:
+    """에이전트를 씬에서 내린다. DB 기록과 이력은 남긴다."""
+    AGENTS.pop(agent_id, None)
+    await hub.broadcast(
+        AgentRemovedMessage(payload=AgentRefPayload(agent_id=agent_id)).model_dump(mode="json")
+    )
 
 
 async def mock_state_loop() -> None:

@@ -27,8 +27,8 @@ import { ZoneMarkers } from './ZoneMarkers'
  * 해바라기 씨앗 배열과 같은 원리다. 반지름도 √n으로 늘려 밀도를 고르게 한다.
  */
 const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
-/** 큐브 한 변이 0.9라 최소 이 정도는 떨어져야 면이 겹치지 않는다 */
-const SCATTER_BASE = 0.62
+/** 캐릭터 어깨너비를 감안한 최소 간격. 큐브(한 변 0.9)에도 넉넉하다 */
+const SCATTER_BASE = 0.8
 
 function scatterFor(index: number): [number, number] {
   const angle = index * GOLDEN_ANGLE
@@ -49,13 +49,31 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
   // role_id → model_path. 등록된 모델이 없으면 해당 역할은 큐브로 그려진다.
   const roles = useRoles()
 
-  // agent_id로 정렬한 뒤 순서대로 배치한다. 정렬을 거치지 않으면 목록 순서가
-  // 바뀔 때마다 큐브 자리가 통째로 뒤바뀐다.
+  // 흩뿌리기는 **존별로** 계산한다.
+  //
+  // 전체 목록 순번으로 계산하면 같은 존에 모인 에이전트들이 서로 겹친다 —
+  // 순번이 1,4,7 처럼 띄엄띄엄이면 각도가 제각각이라 간격이 보장되지 않는다.
+  // 존 안에서 0,1,2 로 다시 세면 황금각 배치가 제 역할을 한다.
+  //
+  // 존은 상태가 아니라 좌표로 나눈다. running 과 retrying 이 같은 존을
+  // 쓰기 때문이다 (명세 5.1절).
   const scatters = useMemo(() => {
+    const byZone = new Map<string, Agent[]>()
+    agents.forEach((a) => {
+      const key = a.position.join(',')
+      const group = byZone.get(key)
+      if (group) group.push(a)
+      else byZone.set(key, [a])
+    })
+
     const map: Record<string, [number, number]> = {}
-    ;[...agents]
-      .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
-      .forEach((a, i) => (map[a.agent_id] = scatterFor(i)))
+    byZone.forEach((group) => {
+      // agent_id 정렬로 자리를 고정한다. 안 하면 목록 순서가 바뀔 때마다
+      // 캐릭터들이 존 안에서 자리를 맞바꾼다.
+      group
+        .sort((a, b) => a.agent_id.localeCompare(b.agent_id))
+        .forEach((a, i) => (map[a.agent_id] = scatterFor(i)))
+    })
     return map
   }, [agents])
 

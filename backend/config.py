@@ -73,6 +73,13 @@ class Settings(BaseSettings):
     # 여기에 검증·정리 담당 2명이 더해지므로 3이면 에이전트 5개가 뜬다.
     research_agent_count: int = 3
 
+    # 작업을 마친 에이전트가 씬에 머무는 시간(초).
+    #
+    # 실행 에이전트는 일회용이라 done 에 도달하면 돌아갈 자리가 없다. 그대로
+    # 두면 done 존에 무한정 쌓여 화면을 가린다. 명세 5.1절도 done 을 "짧게
+    # 머무는" 상태로 본다. 사라져도 DB 기록과 이력은 남으므로 복기는 된다.
+    run_agent_linger_seconds: float = 8.0
+
     anthropic_api_key: str = ""
     openai_api_key: str = ""
 
