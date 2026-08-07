@@ -47,8 +47,8 @@ jobs:
       # 테스트 도구는 requirements-dev.txt에 있고, 그 파일이 requirements.txt를
       # 포함하므로 한 줄이면 된다.
       - run: pip install -r backend/requirements-dev.txt
-      - run: ruff check backend/
-      - run: ruff format --check backend/
+      - run: ruff check backend/ tools/
+      - run: ruff format --check backend/ tools/
       - run: pytest backend/tests/
 
   frontend:

@@ -12,6 +12,10 @@ venv/
 backend/uploads/*
 !backend/uploads/.gitkeep
 
+# 캐릭터 원본 FBX — 용량이 크고 Mixamo에서 각자 받는 것이라 커밋하지 않는다.
+# 빌드 방법은 tools/README.md 참고.
+tools/assets/
+
 # --- Node / frontend ---
 node_modules/
 .next/

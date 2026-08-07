@@ -1,0 +1,22 @@
+# tools/ 용 ruff 설정.
+#
+# backend/ 는 backend/pyproject.toml 의 설정을 쓴다 — ruff는 각 파일에서
+# 가장 가까운 설정을 적용하므로 둘이 충돌하지 않는다.
+# 두 곳의 규칙은 의도적으로 같게 맞춰 두었다.
+
+target-version = "py312"
+line-length = 100
+
+[lint]
+select = [
+    "E",   # pycodestyle
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+
+[lint.per-file-ignores]
+# 블렌더 안에서만 도는 스크립트다. bpy 는 블렌더 런타임이 제공하므로
+# 개발 환경에는 설치되어 있지 않다.
+"tools/fbx_to_glb.py" = ["E402"]

@@ -94,6 +94,8 @@ cd frontend && npm install && npm run dev
 - [설계 명세서](./docs/subagent-viz-design-spec.docx) — 전체 설계 원본 (11장)
 - [명세 해석 노트](./docs/SPEC-NOTES.md) — 명세 내 불일치와 구현 시 채택한 해석
 - [UI 목업](./docs/mockups/) — 예상 화면 10장. 브라우저로 바로 열리는 단일 HTML
+- [캐릭터 에셋 빌드 도구](./tools/README.md) — FBX를 glb로 합치는 콘솔 프로그램
+- [블렌더 작업 방법](./docs/블렌더-작업방법.md) — 위 도구가 자동화한 절차의 수동 버전(문제 해결용)
 - [기여 가이드](./CONTRIBUTING.md)
 
 ## 기여
