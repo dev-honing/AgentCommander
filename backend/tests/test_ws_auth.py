@@ -125,3 +125,21 @@ def test_origin_allowed_rules():
     assert origin_allowed(None) is True
     assert origin_allowed(ORIGIN) is True
     assert origin_allowed("http://evil.example") is False
+
+
+def test_multiple_origins_are_allowed(monkeypatch):
+    """터널로 열어 볼 때 로컬 개발이 막히지 않아야 한다.
+
+    하나만 받으면 열어 볼 때마다 값을 바꾸고 되돌리는 일이 반복되고,
+    되돌리는 것을 잊으면 다음 사람이 원인을 못 찾는다.
+    """
+    from config import Settings
+
+    s = Settings(ws_allowed_origin=f" {ORIGIN} , https://tunnel.example:8443 ,, ")
+    assert s.allowed_origins == [ORIGIN, "https://tunnel.example:8443"]
+
+
+def test_single_origin_still_works():
+    from config import Settings
+
+    assert Settings(ws_allowed_origin=ORIGIN).allowed_origins == [ORIGIN]

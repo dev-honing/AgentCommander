@@ -91,4 +91,4 @@ def origin_allowed(origin: str | None) -> bool:
     """
     if origin is None:
         return True
-    return origin == get_settings().ws_allowed_origin
+    return origin in get_settings().allowed_origins

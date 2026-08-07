@@ -27,9 +27,17 @@ class Settings(BaseSettings):
 
     # 인증 (9.3절)
     api_key: str = "change-me-local-dev-key"
-    # WebSocket 핸드셰이크의 Origin 검증에도 쓴다. CORS 는 WebSocket 에
-    # 적용되지 않아 별도로 봐야 한다 — auth.origin_allowed 참고.
+    # 허용할 오리진. CORS 와 WebSocket 핸드셰이크 양쪽에 쓴다.
+    # CORS 는 WebSocket 에 적용되지 않아 별도로 봐야 한다 — auth.origin_allowed 참고.
+    #
+    # 쉼표로 여러 개를 넣을 수 있다. 하나만 받으면 터널이나 스테이징으로
+    # 열어 볼 때마다 로컬 개발이 막혀서, 그때만 값을 되돌리는 일이 반복된다.
     ws_allowed_origin: str = "http://localhost:3000"
+
+    @property
+    def allowed_origins(self) -> list[str]:
+        """쉼표로 나뉜 오리진 목록. 공백과 빈 항목은 버린다."""
+        return [o.strip() for o in self.ws_allowed_origin.split(",") if o.strip()]
 
     # 저장소 (9.2 / 10.6절)
     upload_dir: str = "uploads"
