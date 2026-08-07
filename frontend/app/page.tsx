@@ -10,6 +10,7 @@
 import { useCallback, useMemo } from 'react'
 import { AgentDetailPanel } from '@/components/panel/AgentDetailPanel'
 import { AgentListPanel } from '@/components/panel/AgentListPanel'
+import { FpsMeter } from '@/components/panel/FpsMeter'
 import { RunLauncher } from '@/components/panel/RunLauncher'
 import { Scene } from '@/components/scene/Scene'
 import { STATE_COLOR } from '@/lib/protocol'
@@ -73,6 +74,9 @@ export default function Home() {
       <AgentListPanel agents={list} selectedId={selectedId} onSelect={handleSelect} />
 
       <RunLauncher />
+
+      {/* ?fps=1 일 때만 뜬다 — 명세 10.1절이 요구한 렌더링 성능 측정용 */}
+      <FpsMeter agentCount={list.length} />
 
       {/* key를 주면 다른 에이전트를 고를 때 패널이 새로 마운트되어
           이전 에이전트의 이력이 남지 않는다 */}

@@ -219,16 +219,25 @@ async def role_exists(role_id: str) -> bool:
 # --- 목업 시드 ---------------------------------------------------------
 
 
-async def seed_mock_agents(agents: list[SubAgent]) -> None:
-    """DB가 비어 있을 때만 목업 에이전트를 넣는다.
+async def seed_mock_agents(agents: list[SubAgent]) -> int:
+    """없는 목업 에이전트만 새로 넣고, 넣은 개수를 돌려준다.
 
-    이미 있으면 건드리지 않는다 — 서버를 재시작해도 이전 상태와 이력이
+    이미 있는 것은 건드리지 않는다 — 서버를 재시작해도 이전 상태와 이력이
     이어져야 "복기 가능"이라는 요구가 성립한다 (명세 7장 Phase 1 완료 기준).
+
+    ⚠️ "하나라도 있으면 통째로 건너뛰기"로 만들었다가, MOCK_AGENT_COUNT를
+       20으로 올려도 기존 3개만 남아 렌더링 성능 측정(10.1절)을 할 수 없었다.
+       모자란 만큼만 채우는 방식이라야 그 손잡이가 실제로 동작한다.
     """
     async with get_pool().acquire() as conn:
-        existing = await conn.fetchval("SELECT count(*) FROM agents")
-    if existing:
-        return
+        rows = await conn.fetch("SELECT agent_id FROM agents")
+    existing = {r["agent_id"] for r in rows}
+
+    added = 0
     for agent in agents:
+        if agent.agent_id in existing:
+            continue
         agent.position = STATE_ZONES[agent.state]
         await upsert_agent(agent)
+        added += 1
+    return added
