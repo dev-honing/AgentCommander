@@ -9,37 +9,67 @@
  */
 
 import { Canvas } from '@react-three/fiber'
-import { Grid, OrbitControls } from '@react-three/drei'
+import { OrbitControls } from '@react-three/drei'
 import { MOUSE } from 'three'
 import { useMemo, useRef } from 'react'
 import type { Agent } from '@/lib/protocol'
 import { useAvatarMode } from '@/lib/avatarMode'
 import { useRoles } from '@/lib/useRoles'
+import { TILE_WORLD } from '@/lib/tileTexture'
 import { AgentAvatar } from './AgentAvatar'
+import { TileFloor } from './TileFloor'
 import { ZoneMarkers } from './ZoneMarkers'
 
 /**
- * 같은 존에 모인 에이전트들이 겹치지 않도록 흩뿌린다.
+ * 같은 존에 모인 에이전트들이 겹치지 않도록 자리를 나눈다.
  *
- * 배치는 목록 순서(index) 기반이다. agent_id 해시를 쓰면 서로 다른 id가
- * 비슷한 각도로 떨어져 큐브 두 개가 같은 자리에 겹치는 일이 생긴다 —
- * 실제로 running 존에서 z-fighting이 났다.
+ * 원래는 황금각 나선으로 흩뿌렸다. 겹침은 막았지만 자리가 제각각이라
+ * 타일 바닥 위에서는 캐릭터가 격자를 무시하고 떠도는 것처럼 보였다.
+ * 타일 칸에 맞춰 세우면 배치가 의도된 것으로 읽힌다.
  *
- * 황금각(≈137.5°)으로 돌리면 몇 개를 배치하든 이웃과 각도가 최대한 벌어진다.
- * 해바라기 씨앗 배열과 같은 원리다. 반지름도 √n으로 늘려 밀도를 고르게 한다.
+ * 한 칸 간격이 곧 캐릭터 폭이라, 옆자리와 어깨가 닿되 겹치지는 않는다.
+ * 중심에서 가까운 칸부터 채우므로 인원이 적을 때는 존 한가운데 모인다.
  */
-const GOLDEN_ANGLE = Math.PI * (3 - Math.sqrt(5))
-/** 캐릭터 어깨너비를 감안한 최소 간격. 큐브(한 변 0.9)에도 넉넉하다 */
-const SCATTER_BASE = 0.8
+const CELL = TILE_WORLD
 /** 이 픽셀 이내로 움직였으면 드래그가 아니라 클릭으로 본다 */
 const CLICK_SLOP = 5
-/** 존 다섯 개의 대략적인 중심. 카메라가 이 지점을 본다 */
-const ORBIT_TARGET: [number, number, number] = [2.5, 0, -1]
+/**
+ * 카메라가 보는 지점.
+ *
+ * 존 다섯 개의 무게중심은 (0,0,-1.5)지만 화면 왼쪽을 에이전트 목록이,
+ * 아래쪽을 입력창이 덮는다. 그만큼 목표점을 옮겨 실제로 비어 있는 영역
+ * 한가운데에 맵이 오게 한다 — 안 그러면 error 존이 목록 뒤에 숨는다.
+ */
+const ORBIT_TARGET: [number, number, number] = [-4.5, -1.5, 2.4]
+
+/** 중심에서 가까운 순으로 정렬한 격자 칸. 필요한 만큼만 만들어 재사용한다 */
+let cells: [number, number][] = []
+
+function ensureCells(count: number) {
+  if (cells.length >= count) return
+  // 정사각 격자를 넉넉히 만든 뒤 중심 거리로 정렬한다.
+  const side = Math.ceil(Math.sqrt(count)) + 2
+  const half = (side - 1) / 2
+  const made: [number, number][] = []
+  for (let i = 0; i < side; i += 1) {
+    for (let j = 0; j < side; j += 1) {
+      made.push([(i - half) * CELL, (j - half) * CELL])
+    }
+  }
+  // 거리가 같은 칸끼리는 각도로 순서를 고정한다. 안 그러면 정렬이 불안정해
+  // 목록이 갱신될 때마다 캐릭터들이 자리를 맞바꾼다.
+  made.sort((a, b) => {
+    const da = a[0] * a[0] + a[1] * a[1]
+    const db = b[0] * b[0] + b[1] * b[1]
+    if (Math.abs(da - db) > 1e-6) return da - db
+    return Math.atan2(a[1], a[0]) - Math.atan2(b[1], b[0])
+  })
+  cells = made
+}
 
 function scatterFor(index: number): [number, number] {
-  const angle = index * GOLDEN_ANGLE
-  const radius = SCATTER_BASE * Math.sqrt(index + 0.5)
-  return [Math.cos(angle) * radius, Math.sin(angle) * radius]
+  ensureCells(index + 1)
+  return cells[index]
 }
 
 type SceneProps = {
@@ -90,8 +120,12 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
   return (
     <Canvas
       shadows
-      // 존이 x∈[-12,12], z∈[-12,9] 에 퍼져 있어 전체가 한눈에 들어올 거리
-      camera={{ position: [22, 21, 30], fov: 45 }}
+      // 존이 x∈[-12,12], z∈[-12,9] 에 퍼져 있어 전체가 한눈에 들어올 거리.
+      //
+      // 화각을 좁히고 그만큼 다가섰다. 45°에서는 원근 왜곡이 커서 가장자리
+      // 캐릭터가 기울어 보였는데, 도트는 평면이라 이 왜곡이 더 눈에 띈다.
+      // 좁은 화각은 화면을 납작하게 만들어 2D 도트와 결이 맞는다.
+      camera={{ position: [15, 20.5, 35], fov: 38 }}
       // 시점을 회전하다 빈 공간에서 손을 떼도 click 이 발생한다. 그대로 두면
       // 카메라를 돌릴 때마다 선택이 풀리므로, 거의 움직이지 않은 경우만
       // "빈 곳을 눌렀다"로 본다.
@@ -112,18 +146,7 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       <directionalLight position={[14, 24, 14]} intensity={1.1} castShadow />
       <directionalLight position={[-18, 10, -14]} intensity={0.3} color="#6f8cff" />
 
-      <Grid
-        args={[120, 120]}
-        cellSize={1}
-        cellThickness={0.6}
-        cellColor="#1e2b4a"
-        sectionSize={6}
-        sectionThickness={1}
-        sectionColor="#2f4a7a"
-        fadeDistance={95}
-        fadeStrength={1}
-        infiniteGrid
-      />
+      <TileFloor />
 
       <ZoneMarkers />
 
@@ -148,14 +171,12 @@ export function Scene({ agents, speech, selectedId, onSelect, onDeselect }: Scen
       <OrbitControls
         makeDefault
         enablePan
-        // 원점이 아니라 존 다섯 개의 중심을 본다. 원점을 보면 waiting(12,0,9)이
-        // 화면 아래로 밀려 입력창에 가린다.
         target={ORBIT_TARGET}
         mouseButtons={{ LEFT: MOUSE.ROTATE, MIDDLE: MOUSE.PAN, RIGHT: MOUSE.PAN }}
         minPolarAngle={0.2}
         maxPolarAngle={Math.PI / 2.15}
-        minDistance={8}
-        maxDistance={70}
+        minDistance={6}
+        maxDistance={62}
       />
     </Canvas>
   )

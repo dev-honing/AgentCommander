@@ -17,13 +17,19 @@ import { MathUtils } from 'three'
 import { pixelCharacterFrames, SPRITE_H, SPRITE_W } from '@/lib/pixelCharacter'
 import type { Agent } from '@/lib/protocol'
 import { STATE_COLOR } from '@/lib/protocol'
+import { TILE_WORLD } from '@/lib/tileTexture'
 import { DialogueBubble } from './DialogueBubble'
 import { Nametag } from './Nametag'
 
 const LERP_SPEED = 2.4
-/** 캐릭터 키(월드 단위). 리깅 캐릭터와 같은 값이라 나란히 둬도 어색하지 않다 */
-const HEIGHT = 1.6
-const WIDTH = HEIGHT * (SPRITE_W / SPRITE_H)
+/**
+ * 캐릭터 크기는 타일에 맞춘다 — 폭이 정확히 한 칸.
+ *
+ * 임의의 키를 정하면 타일 눈금과 어긋나 캐릭터가 바닥에 얹혀 보인다.
+ * 타일을 기준으로 잡으면 카메라를 어떻게 움직여도 비율이 유지된다.
+ */
+const WIDTH = TILE_WORLD
+const HEIGHT = WIDTH * (SPRITE_H / SPRITE_W)
 
 /** 프레임 전환 간격(초). 상태에 따라 달라진다 */
 const FRAME_INTERVAL: Record<string, number> = {
@@ -106,14 +112,22 @@ export function AgentSprite({ agent, scatter, speech, selected, onClick }: Props
         />
       </sprite>
 
-      {/* 상태는 발밑 링으로 표시한다. 옷 색을 물들이면 역할 구분이 사라진다. */}
+      {/* 발밑 그림자.
+          스프라이트는 빛을 받지 않아 그림자가 생기지 않는다. 그림자가 없으면
+          바닥에 서 있는지 떠 있는지 구분이 안 되므로 직접 깔아 준다. */}
       <mesh position={[0, 0.02, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <circleGeometry args={[WIDTH * 0.3, 20]} />
+        <meshBasicMaterial color="#05080f" transparent opacity={0.45} />
+      </mesh>
+
+      {/* 상태는 발밑 링으로 표시한다. 옷 색을 물들이면 역할 구분이 사라진다. */}
+      <mesh position={[0, 0.03, 0]} rotation={[-Math.PI / 2, 0, 0]}>
         <ringGeometry args={[0.34, selected ? 0.52 : 0.44, 32]} />
         <meshBasicMaterial color={color} transparent opacity={selected ? 0.95 : 0.6} />
       </mesh>
 
       {(isRetrying || isError) && (
-        <mesh position={[0, 0.01, 0]} rotation={[-Math.PI / 2, 0, 0]}>
+        <mesh position={[0, 0.025, 0]} rotation={[-Math.PI / 2, 0, 0]}>
           <ringGeometry args={[0.6, 0.68, 32]} />
           <meshBasicMaterial color={color} transparent opacity={0.4} />
         </mesh>
